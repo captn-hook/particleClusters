@@ -144,14 +144,14 @@ fn main() {
 
         //update simulation
         if let Some(args) = event.update_args() {
-            let verbose = true;
+            let verbose = false;
             if verbose {
                 println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
                 sim.print(verbose);
             }
             //sim.update(verbose);
-            println!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
-            sim.print(verbose);
+            //println!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
+            //sim.print(verbose);
         }
     }
 }

@@ -1,5 +1,9 @@
 use piston_window::*;
 use rand::Rng;
+use crossterm::cursor::MoveToPreviousLine;
+
+use std::{thread, time};
+use std::io::{Write, stdout};
 
 use colored::Colorize;
 
@@ -62,17 +66,21 @@ impl Simulation {
 
     pub fn print(&self, _verbose: bool) {
         for y in 0..self.size[1] {
+            print!("{:04}|", y);
             for x in 0..self.size[0] {
                 print!("{}", self.grid[y as usize][x as usize].print());
             }
             println!();
         }
+        //carrieg return size + 1 lines
+        MoveToPreviousLine((self.size[1] + 1).try_into().unwrap());
+
     }
                 
 
     pub fn swap_pixels(&mut self, pos1: [u32; 2], pos2: [u32; 2]) {
         let pixel1 = self.grid[pos1[1] as usize][pos1[0] as usize];
-        let pixel2 = self.grid[pos2[1] as usize][pos2[0] as usize];
+        let pixel2 = self.grid[pos2[1] as usize][pos2[0] as usize]; 
         self.grid[pos1[1] as usize][pos1[0] as usize] = pixel2;
         self.grid[pos2[1] as usize][pos2[0] as usize] = pixel1;
     }
@@ -94,7 +102,7 @@ impl Simulation {
         //println!("{:?}", rect);
         for x in rect[0]..rect[2] + 1{
             for y in rect[1]..rect[3] + 1{
-                self.grid[y as usize][x as usize] = Pixel::spawn(typ, [x, y]);
+                self.grid[y as usize][x as usize] = Pixel::spawn(typ.clone(), [x, y]);
             }
         }
     }
@@ -106,7 +114,7 @@ impl Simulation {
         for x in 0..self.size[0] {
             for y in y..self.size[1] {
                 if self.grid[y as usize][x as usize].density <= 0.3 {
-                    self.grid[y as usize][x as usize] = Pixel::spawn(typ, [x, y]);
+                    self.grid[y as usize][x as usize] = Pixel::spawn(typ.clone(), [x, y]);
                 }
             }
         }

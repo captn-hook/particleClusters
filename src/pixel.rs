@@ -74,7 +74,7 @@ impl Pixel {
         let direct = false;
         let symbols = "░▒▓█OEDCBAX";
         //use density to determine symbol, and color from color
-        let mut printstr = format!("{}", symbols.chars().nth(self.density as usize).unwrap());
+        let mut printstr = format!("[{}]", symbols.chars().nth(self.density as usize).unwrap());
         
         //get max from colored rgb
         //red max
