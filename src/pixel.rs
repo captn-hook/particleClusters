@@ -1,5 +1,6 @@
 use rand::Rng;
 use piston_window::*;
+use colored::Colorize;
 
 use crate::draw::*;
 
@@ -9,6 +10,7 @@ use crate::elements::*;
 
 #[derive(Clone, Copy)]
 pub struct Pixel {
+    pub ptype: u8,
     pub pos: [u32; 2],
     pub vel: [f64; 2],
     pub color: [f32; 4],
@@ -18,6 +20,7 @@ pub struct Pixel {
     pub friction_multiplier: f64,
 }
 
+#[derive(Clone)]
 pub struct PType {
     //each ptype lives in pixel/ptype.rs
     pub name: String,
@@ -27,7 +30,7 @@ pub struct PType {
 impl PType {
     pub fn new(name: String) -> PType {
         
-        let interacts: Vec<String> = [''];
+        let interacts: Vec<String> = vec![];
         PType {
             name,
             interact: interacts,
@@ -39,8 +42,8 @@ impl PType {
     }
 
     pub fn fetch_interact(&self, interact: String) -> bool {
-        for i in self.interact {
-            if i == interact {
+        for i in &self.interact {
+            if i == &interact {
                 return  true;
             }
         }
@@ -49,8 +52,8 @@ impl PType {
 }
 
 impl Pixel {
-    pub fn new(typ: String, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64) -> Pixel {
-        ptype = PType::new(typ);
+    pub fn new(typ: String, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64, element_list: &mut ElementList) -> Pixel {
+        let ptype = element_list.get(typ);
         Pixel {
             ptype,
             pos,
@@ -63,94 +66,71 @@ impl Pixel {
         }
     }
 
-    pub fn print(&self) {
-        if self.density == 0.0 {
-            print!("[ ]");
-        } else if self.density < 0.1 {
-            print!("{}", "[░]".color(self.color));
-        } else if self.density < 0.2 {
-            print!("{}", "[▒]".color(self.color));
-        } else if self.density < 0.3 {
-            print!("{}", "[▓]".color(self.color));
-        } else if self.density < 0.4 {
-            print!("{}", "[█]".color(self.color));
-        } else if self.density < 0.5 {
-            print!("{}", "[O]".color(self.color));            
-        } else if self.density < 0.6 {
-            print!("{}", "[E]".color(self.color));            
-        } else if self.density < 0.7 {
-            print!("{}", "[D]".color(self.color));            
-        } else if self.density < 0.8 {
-            print!("{}", "[C]".color(self.color));            
-        } else if self.density < 0.9 {
-            print!("{}", "[B]".color(self.color));            
-        } else if self.density < 1.0 {
-            print!("{}", "[A]".color(self.color));            
+    pub fn default() -> Pixel {
+        air([0, 0])
+    }
+
+    pub fn print(&self) -> String {
+        let direct = false;
+        let symbols = "░▒▓█OEDCBAX";
+        //use density to determine symbol, and color from color
+        let mut printstr = format!("{}", symbols.chars().nth(self.density as usize).unwrap());
+        
+        //get max from colored rgb
+        //red max
+        if self.color[0] > self.color[1] && self.color[0] > self.color[2] {
+            printstr = printstr.red().to_string();
+        //green max 
+        } else if self.color[1] > self.color[0] && self.color[1] > self.color[2] {
+            printstr = printstr.green().to_string();
+        //blue max
+        } else if self.color[2] > self.color[0] && self.color[2] > self.color[1] {
+            printstr = printstr.blue().to_string();
+        //all equal
         } else {
-            print!("{}", "[X]".color(self.color));            
+            printstr = printstr.white().to_string();
         }
+
+        //get min from colored rgb
+        //red min
+        if self.color[0] < self.color[1] && self.color[0] < self.color[2] {
+            printstr = printstr.on_magenta().to_string();
+        //green min
+        } else if self.color[1] < self.color[0] && self.color[1] < self.color[2] {
+            printstr = printstr.on_purple().to_string();
+        //blue min
+        } else if self.color[2] < self.color[0] && self.color[2] < self.color[1] {
+            printstr = printstr.on_cyan().to_string();
+        //all equal
+        } else {
+            printstr = printstr.on_white().to_string();
+        }
+
+
+
+        if direct {
+            print!("{}", printstr);
+        }
+        return printstr.to_string();
     }
 
     pub fn spawn(typ: String, pos: [u32; 2]) -> Pixel {
         if typ == "air" {
-            return air(pos);
+             air(pos)
         } else if typ == "sand" {
-            return sand(pos);
+            sand(pos)
         } else if typ == "water" {
-            return water(pos);
+            water(pos)
         } else if typ == "lava" {
-            return lava(pos);
+            lava(pos)
         } else if typ == "stone" {
-            return stone(pos);
+            stone(pos)
         } else if typ == "brick" {
-            brick(pos);
+            brick(pos)
         } else {
-            return air(pos);
+            air(pos)
         }
     }
-        
-
-    fn rand_color_margin(color: [f32; 4], margin: f32) -> [f32; 4] {
-        let mut rng = rand::thread_rng();
-        let mut new_color = color;
-        for i in 0..3 {
-            new_color[i] = rng.gen_range((color[i] - margin)..(color[i] + margin));
-        }
-        //max and min
-        for i in 0..3 {
-            if new_color[i] > 1.0 {
-                new_color[i] = 1.0;
-            }
-            if new_color[i] < 0.0 {
-                new_color[i] = 0.0;
-            }
-        }
-        new_color[3] = 1.0;
-        new_color
-    }
-
-    fn rand_color_grey(value: f32, margin: f32) -> [f32; 4] {
-        let mut rng = rand::thread_rng();
-        let mut new_color = [rng.gen_range((value - margin)..(value + margin)); 4];
-
-        //max and min
-        for i in 0..3 {
-            if new_color[i] > 1.0 {
-                new_color[i] = 1.0;
-            }
-            if new_color[i] < 0.0 {
-                new_color[i] = 0.0;
-            }
-        }
-        new_color[3] = 1.0;
-        new_color
-    }
-
-    fn rand_color(value: f32, margin: f32) -> f32 {
-        let mut rng = rand::thread_rng();
-        rng.gen_range((value - margin)..(value + margin))
-    }
-
 
     pub fn get_update(&mut self, gravity: f64, friction: f64, size: [u32; 2], edge_mode: bool) -> [u32; 2] {
         let mut poscp = self.pos;

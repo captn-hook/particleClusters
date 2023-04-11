@@ -10,6 +10,9 @@ use simulate::*;
 mod draw;
 use draw::*;
 
+mod elements;
+use elements::*;
+
 fn main() {
     let mut sim = Simulation::new();
 
@@ -84,7 +87,7 @@ fn main() {
             if button == MouseButton::Left {
                 left_click = false;
                 //left click to place pixel
-                sim.place_line(last_left_click);
+                sim.place_line(last_left_click, "stone".to_string());
             }
             if button == MouseButton::Right {
                 right_click = false;
@@ -121,21 +124,21 @@ fn main() {
 
         //middle click to to place sand
         if middle_click {
-            sim.place_pixel("sand");
+            sim.place_pixel("sand".to_string());
         }
         //right click to erase (air)
         if right_click {
-            sim.erase(5);
+            sim.erase(5, "air".to_string());
         }
         //space to place water
         if space {
-            sim.sea("water");
+            sim.sea("water".to_string());
         }
         if shift {
-            sim.place_pixel("brick")
+            sim.place_pixel("brick".to_string());
         }
         if ctrl {
-            sim.place_pixel("lava");
+            sim.place_pixel("lava".to_string());
         }
 
 

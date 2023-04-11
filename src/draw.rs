@@ -1,4 +1,6 @@
+use rand::Rng;
 use piston_window::*;
+
 use crate::pixel::*;
 use crate::simulate::*;
 
@@ -136,3 +138,45 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &[[Pixel; 50]
     });
 }
         
+
+
+pub fn rand_color_margin(color: [f32; 4], margin: f32) -> [f32; 4] {
+    let mut rng = rand::thread_rng();
+    let mut new_color = color;
+    for i in 0..3 {
+        new_color[i] = rng.gen_range((color[i] - margin)..(color[i] + margin));
+    }
+    //max and min
+    for i in 0..3 {
+        if new_color[i] > 1.0 {
+            new_color[i] = 1.0;
+        }
+        if new_color[i] < 0.0 {
+            new_color[i] = 0.0;
+        }
+    }
+    new_color[3] = 1.0;
+    new_color
+}
+
+pub fn rand_color_grey(value: f32, margin: f32) -> [f32; 4] {
+    let mut rng = rand::thread_rng();
+    let mut new_color = [rng.gen_range((value - margin)..(value + margin)); 4];
+
+    //max and min
+    for i in 0..3 {
+        if new_color[i] > 1.0 {
+            new_color[i] = 1.0;
+        }
+        if new_color[i] < 0.0 {
+            new_color[i] = 0.0;
+        }
+    }
+    new_color[3] = 1.0;
+    new_color
+}
+
+pub fn rand_color(value: f32, margin: f32) -> f32 {
+    let mut rng = rand::thread_rng();
+    rng.gen_range((value - margin)..(value + margin))
+}

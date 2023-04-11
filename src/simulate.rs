@@ -5,6 +5,7 @@ use colored::Colorize;
 
 use crate::pixel::*;
 use crate::draw::*;
+use crate::elements::*;
 
 pub struct Simulation {
     pub size: [u32; 2],
@@ -15,10 +16,14 @@ pub struct Simulation {
     pub friction: f64,
     pub mouse_pos: [u32; 2],
     pub edge_mode: bool,
+    pub elements: ElementList,
 }
 
 impl Simulation {
     pub fn new() -> Simulation {
+
+        let mut elements = ElementList::new();
+
         const scale: u32 = 10;
         const size: [u32; 2] = [50; 2];
         
@@ -28,7 +33,7 @@ impl Simulation {
         let mut edge_mode: bool = true;
 
         
-        let mut grid = [[Pixel::air([0, 0]); size[0] as usize]; size[1] as usize];
+        let mut grid = [[Pixel::default(); 50]; 50];
         
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
@@ -51,6 +56,7 @@ impl Simulation {
             friction,
             mouse_pos,
             edge_mode,
+            elements,
         }
     }
 
@@ -83,24 +89,24 @@ impl Simulation {
     }
 
     //place pixel (stone) from mouse position to mouse position
-    pub fn place_line(&mut self, pos: [u32; 2]) {
+    pub fn place_line(&mut self, pos: [u32; 2], typ: String) {
         let rect = rect_pos(self.mouse_pos, pos);
         //println!("{:?}", rect);
         for x in rect[0]..rect[2] + 1{
             for y in rect[1]..rect[3] + 1{
-                self.grid[y as usize][x as usize] = Pixel::stone([x, y]);
+                self.grid[y as usize][x as usize] = Pixel::spawn(typ, [x, y]);
             }
         }
     }
 
     //replace air with water below mouse position
-    pub fn sea(&mut self) {
+    pub fn sea(&mut self, typ: String) {
         let x = self.mouse_pos[0];
         let y = self.mouse_pos[1];
         for x in 0..self.size[0] {
             for y in y..self.size[1] {
                 if self.grid[y as usize][x as usize].density <= 0.3 {
-                    self.grid[y as usize][x as usize] = Pixel::water([x, y]);
+                    self.grid[y as usize][x as usize] = Pixel::spawn(typ, [x, y]);
                 }
             }
         }
@@ -112,11 +118,11 @@ impl Simulation {
     }
 
     //place pixel (air) at mouse position r=radius
-    pub fn erase(&mut self, r: u32) {
+    pub fn erase(&mut self, r: u32, typ: String ) {
         let x = self.mouse_pos[0];
         let y = self.mouse_pos[1];
         for pixel in self.radius_iter(r) {
-            self.grid[pixel[1] as usize][pixel[0] as usize] = Pixel::air([pixel[0], pixel[1]]);
+            self.grid[pixel[1] as usize][pixel[0] as usize] = air([pixel[0], pixel[1]]);
         }
     }
 

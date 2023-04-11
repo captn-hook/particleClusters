@@ -1,9 +1,84 @@
 use crate::pixel::*;
+use crate::draw::*;
+
+//singletons of each element string and their number u8
+pub struct ElementList {
+    pub elements: Vec<String>,
+    pub element_codes: Vec<u8>,
+    
+    length: usize,
+}
+
+impl ElementList {
+    pub fn new() -> ElementList {
+        let elements = vec![
+            "air".to_string(),
+            "sand".to_string(),
+            "water".to_string(),
+            "lava".to_string(),
+            "stone".to_string(),
+            "brick".to_string(),
+        ];
+        let element_codes = vec![
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+        ];
+        let length = elements.len();
+        ElementList {
+            elements,
+            element_codes,
+            length,
+        }
+    }
+
+    pub fn get(&self, index: String) -> u8 {
+        for i in 0..self.length {
+            if self.elements[i] == index {
+                return self.element_codes[i];
+            }
+        }
+        return 0;
+    }
+
+    pub fn get_name(&self, index: u8) -> String {
+        for i in 0..self.length {
+            if self.element_codes[i] == index {
+                return self.elements[i].clone();
+            }
+        }
+        return "air".to_string();
+    }
+
+    pub fn len(&self) -> usize {
+        self.length
+    }
+
+    pub fn add(&mut self, name: String) {
+        self.elements.push(name);
+        self.element_codes.push(self.length as u8);
+        self.length += 1;
+    }
+
+    pub fn remove(&mut self, name: String) {
+        for i in 0..self.length {
+            if self.elements[i] == name {
+                self.elements.remove(i);
+                self.element_codes.remove(i);
+                self.length -= 1;
+                return;
+            }
+        }
+    }
+}
 
 pub fn air(pos: [u32; 2]) -> Pixel {
-    let cl = Pixel::rand_color_grey(1.0, 0.05);
+    let cl = rand_color_grey(1.0, 0.05);
     Pixel {
-        ptype: PType::new("air".to_string()),
+        ptype: 0,
         pos,
         vel: [0.0; 2],
         color: cl,
@@ -15,10 +90,10 @@ pub fn air(pos: [u32; 2]) -> Pixel {
 }
 
 pub fn sand(pos: [u32; 2]) -> Pixel {
-    let r = Pixel::rand_color(0.8, 0.15);
-    let g = Pixel::rand_color(0.8, 0.1);
+    let r = rand_color(0.8, 0.15);
+    let g = rand_color(0.8, 0.1);
     Pixel {
-        ptype: PType::new("sand".to_string()),
+        ptype: 1,
         pos,
         vel: [0.0; 2],
         color: [r, g, 0.0, 1.0],
@@ -30,9 +105,9 @@ pub fn sand(pos: [u32; 2]) -> Pixel {
 }
 
 pub fn water(pos: [u32; 2]) -> Pixel {
-    let b = Pixel::rand_color(0.8, 0.15);
+    let b = rand_color(0.8, 0.15);
     Pixel {
-        ptype: PType::new("water".to_string()),
+        ptype: 2,
         pos,
         vel: [0.0; 2],
         color: [0.0, 0.0, b, 1.0],
@@ -44,9 +119,9 @@ pub fn water(pos: [u32; 2]) -> Pixel {
 }
 
 pub fn lava(pos: [u32; 2]) -> Pixel {
-    let r = Pixel::rand_color(0.8, 0.15);
+    let r = rand_color(0.8, 0.15);
     Pixel {
-        ptype: PType::new("lava".to_string()),
+        ptype: 3,
         pos,
         vel: [0.0; 2],
         color: [r, 0.0, 0.0, 1.0],
@@ -58,9 +133,9 @@ pub fn lava(pos: [u32; 2]) -> Pixel {
 }
 
 pub fn stone(pos: [u32; 2]) -> Pixel {
-    let cl = Pixel::rand_color_grey(0.1, 0.25);
+    let cl = rand_color_grey(0.1, 0.25);
     Pixel {
-        ptype: PType::new("stone".to_string()),
+        ptype: 4,
         pos,
         vel: [0.0; 2],
         color: cl,
@@ -72,11 +147,11 @@ pub fn stone(pos: [u32; 2]) -> Pixel {
 }
 
 pub fn brick(pos: [u32; 2]) -> Pixel {
-    let r = Pixel::rand_color(0.8, 0.15);
-    let g = Pixel::rand_color(0.4, 0.1);
-    let b = Pixel::rand_color(0.2, 0.1);
+    let r = rand_color(0.8, 0.15);
+    let g = rand_color(0.4, 0.1);
+    let b = rand_color(0.2, 0.1);
     Pixel {
-        ptype: PType::new("brick".to_string()),
+        ptype: 5,
         pos,
         vel: [0.0; 2],
         color: [r, g, b, 1.0],
