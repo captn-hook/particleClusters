@@ -35,7 +35,6 @@ impl Simulation {
         let mut friction: f64 = 0.99;        
         let mut mouse_pos = [0, 0];
         let mut edge_mode: bool = true;
-
         
         let mut grid = [[Pixel::default(); 50]; 50];
         
@@ -62,6 +61,25 @@ impl Simulation {
             edge_mode,
             elements,
         }
+    }
+
+    pub fn update(&self verbose: bool) {
+        //update all pixels 
+        //2 hops this time
+        let mut collisions: Vec<(Pixel, Pixel)> = vec![];
+        //only collisions will swap places
+        for row in &mut self.grid {
+            for pixel in row {
+                match pixel.update(&mut self.grid, self.gravity, self.friction, self.edge_mode, verbose, pixel.pos.clone()) {
+                    Some(collision) => collisions.push(collision),
+                    None => println!("NC: {:?}", pixel),
+                }
+            }
+        }
+
+        //we now have a list of collisions
+        //fuk
+        sim.print(verbose);
     }
 
     pub fn print(&self, _verbose: bool) {

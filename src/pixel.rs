@@ -70,6 +70,50 @@ impl Pixel {
         air([0, 0])
     }
 
+    pub fn adjacents() -> [[u32; 2]; 8] {
+        let mut adjacents = [[0; 2]; 8];
+        let mut x = self.pos[0];
+        let mut y = self.pos[1];
+
+        for ix in 0..3 {
+            for iy in 0..3 {
+                if ix == 1 && iy == 1 {
+                    continue;
+                }
+                adjacents[ix * 3 + iy] = [x + ix - 1, y + iy - 1];
+            }
+        }
+        adjacents
+    }
+
+    //ok
+    //so/
+    //a pixel update cycle shoulde take a pixel COPT and a grid REFERENCE but not disturb the grid
+    //the COPY is to be modified at each step, subtracting from its velocity and adding to its position
+    //to get final postion for that frame
+    //IF THE PIXEL TRAVELS THRU ITS LIKE KINDA AND ENDS AT ITS LIKE KIND,
+    //"solid", ignore for now
+    //otherwise
+    //aPPEND THE COLLISIONS CHAIN
+    ////amd tjem
+    //fuck
+    pub fn update(&mut self, grid: &mut [[Pixel; 50]; 50], gravity: f64, friction: f64, edge_mode: bool, verbose: bool, step: [u32; 2]) -> Option<(Pixel, Pixel) {
+        if step == self.pos {
+            //set steps to distance travelable, magnitude of vec
+            
+        }
+        //calculate new position in number of pixel steps
+        //check if viable step
+        let mut viable = true;
+        let adjacents = self.adjacents();
+        for coord in adjacents {
+            //if adjacent is across border, check edge
+            if coord[0] > 49 || coord[0] < 0 || coord[1] > 49 || coord[1] < 0 {
+                if edge_mode {
+                    //wrap, replace coord with coord on opposite side. 
+                    if  
+                        //if corner
+                }
     pub fn print(&self) -> String {
         let direct = false;
         let symbols = "░▒▓█OEDCBAX";

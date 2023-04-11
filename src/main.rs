@@ -149,7 +149,7 @@ fn main() {
                 println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
                 sim.print(verbose);
             }
-            //sim.update(verbose);
+            sim.update(verbose);
             //println!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
             //sim.print(verbose);
         }
