@@ -9,7 +9,7 @@ use colored::Colorize;
 
 use crate::pixel::*;
 use crate::draw::*;
-use crate::elements::*;
+use crate::elements::*;x
 
 pub struct Simulation {
     pub size: [u32; 2],
