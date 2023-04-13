@@ -6,7 +6,7 @@ use crate::draw::*;
 
 use crate::elements::*;
 
-//use crate::Simulation;
+use crate::simulate::*;
 
 #[derive(Clone, Copy)]
 pub struct Pixel {
@@ -70,7 +70,7 @@ impl Pixel {
         air([0, 0])
     }
 
-    pub fn adjacents() -> [[u32; 2]; 8] {
+    pub fn adjacents(&self) -> [[u32; 2]; 8] {
         let mut adjacents = [[0; 2]; 8];
         let mut x = self.pos[0];
         let mut y = self.pos[1];
@@ -80,7 +80,7 @@ impl Pixel {
                 if ix == 1 && iy == 1 {
                     continue;
                 }
-                adjacents[ix * 3 + iy] = [x + ix - 1, y + iy - 1];
+                adjacents[ix as usize * 3 + iy] = [x + ix as u32 - 1, y + iy as u32 - 1];
             }
         }
         adjacents
@@ -100,7 +100,9 @@ impl Pixel {
     pub fn update(&mut self, grid: &mut [[Pixel; 50]; 50], gravity: f64, friction: f64, edge_mode: bool, verbose: bool, step: [u32; 2]) -> Option<(Pixel, Pixel) {
         if step == self.pos {
             //set steps to distance travelable, magnitude of vec
-            
+            let mag = (self.vel[0].pow(2) as f64 + self.vel[2].pow(2)).round() as i32;            
+        } else {
+            //find traveled from
         }
         //calculate new position in number of pixel steps
         //check if viable step
@@ -114,9 +116,10 @@ impl Pixel {
                     if  
                         //if corner
                 }
+
     pub fn print(&self) -> String {
         let direct = false;
-        let symbols = "░▒▓█OEDCBAX";
+        let symbols = " ░▒▓█EDCBAX";
         //use density to determine symbol, and color from color
         let mut printstr = format!("[{}]", symbols.chars().nth(self.density as usize).unwrap());
         
@@ -160,7 +163,7 @@ impl Pixel {
 
     pub fn spawn(typ: String, pos: [u32; 2]) -> Pixel {
         if typ == "air" {
-             air(pos)
+            air(pos)
         } else if typ == "sand" {
             sand(pos)
         } else if typ == "water" {
@@ -218,88 +221,6 @@ impl Pixel {
         poscp        
     }
 
-    pub fn update(&mut self, gravity: f64, friction: f64, size: [u32; 2], edge_mode: bool) -> [u32; 2] {
-        println!("vel1: {:?}", self.vel);
-        self.vel[1] += gravity * self.gravity_multiplier;
-        self.vel[0] *= friction * self.friction_multiplier;
-        self.vel[1] *= friction * self.friction_multiplier;
-        println!("vel2: {:?}", self.vel);
-        //velocity safety check, if close to 0, set to 0, if too high, cap
-        if self.vel[0] < 0.01 && self.vel[0] > -0.01 {
-            self.vel[0] = 0.0;
-        } else if self.vel[0] > 100.0 {
-            self.vel[0] = 100.0;
-        } else if self.vel[0] < -100.0 {
-            self.vel[0] = -100.0;
-        }
-        if self.vel[1] < 0.01 && self.vel[1] > -0.01 {
-            self.vel[1] = 0.0;
-        } else if self.vel[1] > 100.0 {
-            self.vel[1] = 100.0;
-        } else if self.vel[1] < -100.0 {
-            self.vel[1] = -100.0;
-        }
-        //if vel is nan, set to 0
-        if self.vel[0].is_nan() {
-            self.vel[0] = 0.0;
-        }
-        if self.vel[1].is_nan() {
-            self.vel[1] = 0.0;
-        }
-        
-        self.pos[0] += self.vel[0].round() as u32;
-        self.pos[1] += self.vel[1].round() as u32;
-
-        println!("SERVING SIZE AND POS: {:?} {:?}", size, self.pos);
-
-        if edge_mode {
-            //edge true, bounce off edges'
-            println!("IF {:?}", self.pos[0] < 0);
-            println!("IF {:?}", self.pos[0] >= size[0]);
-            if self.pos[0] < 0 {
-                self.pos[0] = 0;
-                self.vel[0] *= -1.0;
-            } else if self.pos[0] >= size[0] {
-                self.pos[0] = size[0] - 1;
-                self.vel[0] *= -1.0;
-            } 
-            if self.pos[1] < 0 {
-                self.pos[1] = 0;
-                self.vel[1] *= -1.0;
-            } else if self.pos[1] >= size[1] {
-                self.pos[1] = size[1] - 1;
-                self.vel[1] *= -1.0;
-            }
-
-            println!("SERVING2: {:?}", self.pos);
-            self.pos
-
-        } else {
-            //edge false, wrap around edges
-            if self.pos[0] < 0 {
-                self.pos[0] = size[0] - 1;
-            } else if self.pos[0] >= size[0] {
-                self.pos[0] = 0;
-            }
-            if self.pos[1] < 0 {
-                self.pos[1] = size[1] - 1;
-            } else if self.pos[1] >= size[1] {
-                self.pos[1] = 0;
-            }
-
-            println!("SERVING1: {:?}", self.pos);
-            self.pos
-        }
-    }
-
-    pub fn collide(&mut self, gravity: f64, friction: f64, size: [u32; 2], edge_mode: bool, other_pixel: &Pixel) -> [u32; 2] {
-        //collison with other, update this with others tranferred momentum and collision angle
-        let angle = (self.pos[1] as f64 - other_pixel.pos[1] as f64) / (self.pos[0] as f64 - other_pixel.pos[0] as f64);
-        self.vel[0] = (other_pixel.vel[0] + other_pixel.vel[1] * angle) / 2.0;
-        self.vel[1] = (other_pixel.vel[1] + other_pixel.vel[0] * angle) / 2.0;
-        self.update(gravity, friction, size, edge_mode)
-    }
-
     pub fn draw(&self, context: Context, graphics: &mut G2d, scale: u32, ruler: bool) {
         
         let coords = screem(self.pos, scale);
@@ -326,7 +247,6 @@ pub fn pixel_draw(pixels: [[Pixel; 50]; 50], context: Context, graphics: &mut G2
                 ruler = true;
             }
             pixel.draw(context, graphics, scale, ruler);
-
         }
     }
 }

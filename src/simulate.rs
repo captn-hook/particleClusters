@@ -1,6 +1,6 @@
 use piston_window::*;
 use rand::Rng;
-use crossterm::cursor::MoveToPreviousLine;
+use crossterm::{QueueableCommand, cursor, terminal, ExecutableCommand};
 
 use std::{thread, time};
 use std::io::{Write, stdout};
@@ -9,7 +9,7 @@ use colored::Colorize;
 
 use crate::pixel::*;
 use crate::draw::*;
-use crate::elements::*;x
+use crate::elements::*;
 
 pub struct Simulation {
     pub size: [u32; 2],
@@ -63,26 +63,31 @@ impl Simulation {
         }
     }
 
-    pub fn update(&self verbose: bool) {
+    pub fn update(&mut self, verbose: bool) {
         //update all pixels 
         //2 hops this time
         let mut collisions: Vec<(Pixel, Pixel)> = vec![];
+        let mut new_grid = self.grid.clone();
         //only collisions will swap places
         for row in &mut self.grid {
             for pixel in row {
                 match pixel.update(&mut self.grid, self.gravity, self.friction, self.edge_mode, verbose, pixel.pos.clone()) {
                     Some(collision) => collisions.push(collision),
-                    None => println!("NC: {:?}", pixel),
+                    None = > (),
                 }
             }
         }
 
+        
+
         //we now have a list of collisions
         //fuk
-        sim.print(verbose);
+        //self.print(verbose);
     }
 
     pub fn print(&self, _verbose: bool) {
+        let mut stdout = stdout();
+        stdout.queue(cursor::SavePosition).unwrap();
         for y in 0..self.size[1] {
             print!("{:04}|", y);
             for x in 0..self.size[0] {
@@ -90,9 +95,8 @@ impl Simulation {
             }
             println!();
         }
-        //carrieg return size + 1 lines
-        MoveToPreviousLine((self.size[1] + 1).try_into().unwrap());
-
+        stdout.queue(cursor::RestorePosition).unwrap();
+        stdout.queue(terminal::Clear(terminal::ClearType::CurrentLine)).unwrap();
     }
                 
 

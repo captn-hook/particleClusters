@@ -2,7 +2,7 @@ use piston_window::*;
 //use rand::Rng;
 
 mod pixel;
-use pixel::*;
+//use pixel::*;
 
 mod simulate;
 use simulate::*;
@@ -11,7 +11,6 @@ mod draw;
 use draw::*;
 
 mod elements;
-use elements::*;
 
 fn main() {
     let mut sim = Simulation::new();
@@ -150,7 +149,7 @@ fn main() {
                 sim.print(verbose);
             }
             sim.update(verbose);
-            //println!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
+            //wln!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
             //sim.print(verbose);
         }
     }
