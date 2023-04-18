@@ -70,8 +70,39 @@ impl Pixel {
         air([0, 0])
     }
 
+    pub fn wrapped_coord(pos: [i32; 2], wrap: bool) -> [u32; 2] {
+        let mut x = pos[0];
+        let mut y = pos[1];
+        if wrap {
+            //go to other side of grid
+            if x > 49 {
+                x = 0;
+            } else if x < 0 {
+                x = 49;
+            }
+            if y > 49 {
+                y = 0;
+            } else if y < 0 {
+                y = 49;
+            }
+        } else {
+            //clamp to edge
+            if x > 49 {
+                x = 49;
+            } else if x < 0 {
+                x = 0;
+            }
+            if y > 49 {
+                y = 49;
+            } else if y < 0 {
+                y = 0;
+            }
+        }
+        [x as u32, y as u32]
+    }
+
     pub fn adjacents(&self) -> [[u32; 2]; 8] {
-        let mut adjacents = [[0; 2]; 8];
+        let mut adjacent: [[u32; 2]; 8] = [[0; 2]; 8];
         let mut x = self.pos[0];
         let mut y = self.pos[1];
 
@@ -80,10 +111,46 @@ impl Pixel {
                 if ix == 1 && iy == 1 {
                     continue;
                 }
-                adjacents[ix as usize * 3 + iy] = [x + ix as u32 - 1, y + iy as u32 - 1];
+
+                let coord = [(x + ix) as i32, (y + iy) as i32];
+
+                let wrapped = Pixel::wrapped_coord(coord, false);
+
+                adjacent[(ix + iy) as usize] = wrapped;
             }
         }
-        adjacents
+        adjacent
+    }
+
+    fn phys(&mut self, wrap: bool) -> [u32; 2] {
+        //apply gravity, friction, etc, return next pos
+        
+        self.vel[1] += self.gravity_multiplier * self.density;
+
+        self.vel[0] *= self.friction_multiplier;
+        self.vel[1] *= self.friction_multiplier;
+
+        let mut next_pos = [(self.pos[0] as f64 + self.vel[0]) as u32, (self.pos[1] as f64 + self.vel[1]) as u32];
+
+        next_pos = Pixel::wrapped_coord([next_pos[0] as i32, next_pos[1] as i32], wrap);
+        
+        let adjacents = self.adjacents();
+
+        let mut closest = [0, 0];
+        let mut dist = 1000000.0;
+
+        for a in adjacents {
+            //get the closest adjacent pixel from next_pos
+            let x = ((a[0] as i32 - next_pos[0] as i32).abs() as f64).powi(2);
+            let y = ((a[1] as i32 - next_pos[1] as i32).abs() as f64).powi(2);
+            let d = (x + y).sqrt();
+            if d < dist {
+                dist = d;
+                closest = a;
+            }    
+        }
+
+        closest
     }
 
     //ok
@@ -97,25 +164,12 @@ impl Pixel {
     //aPPEND THE COLLISIONS CHAIN
     ////amd tjem
     //fuck
-    pub fn update(&mut self, grid: &mut [[Pixel; 50]; 50], gravity: f64, friction: f64, edge_mode: bool, verbose: bool, step: [u32; 2]) -> Option<(Pixel, Pixel) {
-        if step == self.pos {
-            //set steps to distance travelable, magnitude of vec
-            let mag = (self.vel[0].pow(2) as f64 + self.vel[2].pow(2)).round() as i32;            
-        } else {
-            //find traveled from
-        }
-        //calculate new position in number of pixel steps
-        //check if viable step
-        let mut viable = true;
-        let adjacents = self.adjacents();
-        for coord in adjacents {
-            //if adjacent is across border, check edge
-            if coord[0] > 49 || coord[0] < 0 || coord[1] > 49 || coord[1] < 0 {
-                if edge_mode {
-                    //wrap, replace coord with coord on opposite side. 
-                    if  
-                        //if corner
-                }
+    pub fn update(&mut self, grid: [[Pixel; 50]; 50], gravity: f64, friction: f64, edge_mode: bool, step: [i32; 2]) -> Option<(Pixel, Pixel)> {
+        //get result pos
+        let pos = self.phys(edge_mode);
+
+        None
+    }
 
     pub fn print(&self) -> String {
         let direct = false;

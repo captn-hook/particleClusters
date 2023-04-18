@@ -41,10 +41,11 @@ impl Simulation {
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
             for x in 0..size[0] {
-                grid[y as usize][x as usize].pos = [x, y];
+                grid[y as usize][x as usize] = Pixel::spawn("air".to_string(), [x, y]);
+
             }
         }
-        
+
         let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * scale, size[1] * scale])
             .exit_on_esc(true)
             .build()
@@ -64,25 +65,26 @@ impl Simulation {
     }
 
     pub fn update(&mut self, verbose: bool) {
-        //update all pixels 
-        //2 hops this time
         let mut collisions: Vec<(Pixel, Pixel)> = vec![];
-        let mut new_grid = self.grid.clone();
-        //only collisions will swap places
-        for row in &mut self.grid {
-            for pixel in row {
-                match pixel.update(&mut self.grid, self.gravity, self.friction, self.edge_mode, verbose, pixel.pos.clone()) {
-                    Some(collision) => collisions.push(collision),
-                    None = > (),
+        
+        for y in 0..self.size[1] {
+            for x in 0..self.size[0] {
+                let mut pixel = self.grid[y as usize][x as usize];
+                let collide = pixel.update(self.grid, self.gravity, self.friction, self.edge_mode, [0, 0]);
+                //if collide option isnt none, add to collisions
+                if let Some((p1, p2)) = collide {
+                    collisions.push((p1, p2));
                 }
             }
         }
 
-        
+        for collision in collisions {
+            let pixel1 = collision.0;
+            let pixel2 = collision.1;
+            
+            println!("COL: ({}, {}) ({}, {})", pixel1.pos[0], pixel1.pos[1], pixel2.pos[0], pixel2.pos[1]);
 
-        //we now have a list of collisions
-        //fuk
-        //self.print(verbose);
+        }
     }
 
     pub fn print(&self, _verbose: bool) {
