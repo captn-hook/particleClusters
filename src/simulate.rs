@@ -5,7 +5,7 @@ use crossterm::cursor::MoveToPreviousLine;
 use std::{thread, time};
 use std::io::{Write, stdout};
 
-use colored::Colorize;
+use colored::Colorize;g
 
 use crate::pixel::*;
 use crate::draw::*;
