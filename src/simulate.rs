@@ -1,6 +1,6 @@
 use piston_window::*;
 use rand::Rng;
-use crossterm::cursor::MoveToPreviousLine;
+use crossterm::{QueueableCommand, cursor, terminal, ExecutableCommand};
 
 use std::{thread, time};
 use std::io::{Write, stdout};
@@ -9,7 +9,7 @@ use colored::Colorize;g
 
 use crate::pixel::*;
 use crate::draw::*;
-use crate::elements::*;x
+use crate::elements::*;
 
 pub struct Simulation {
     pub size: [u32; 2],
@@ -41,10 +41,11 @@ impl Simulation {
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
             for x in 0..size[0] {
-                grid[y as usize][x as usize].pos = [x, y];
+                grid[y as usize][x as usize] = Pixel::spawn("air".to_string(), [x, y]);
+
             }
         }
-        
+
         let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * scale, size[1] * scale])
             .exit_on_esc(true)
             .build()
@@ -63,26 +64,32 @@ impl Simulation {
         }
     }
 
-    pub fn update(&self verbose: bool) {
-        //update all pixels 
-        //2 hops this time
+    pub fn update(&mut self, verbose: bool) {
         let mut collisions: Vec<(Pixel, Pixel)> = vec![];
-        //only collisions will swap places
-        for row in &mut self.grid {
-            for pixel in row {
-                match pixel.update(&mut self.grid, self.gravity, self.friction, self.edge_mode, verbose, pixel.pos.clone()) {
-                    Some(collision) => collisions.push(collision),
-                    None => println!("NC: {:?}", pixel),
+        
+        for y in 0..self.size[1] {
+            for x in 0..self.size[0] {
+                let mut pixel = self.grid[y as usize][x as usize];
+                let collide = pixel.update(self.grid, self.gravity, self.friction, self.edge_mode, [0, 0]);
+                //if collide option isnt none, add to collisions
+                if let Some((p1, p2)) = collide {
+                    collisions.push((p1, p2));
                 }
             }
         }
 
-        //we now have a list of collisions
-        //fuk
-        sim.print(verbose);
+        for collision in collisions {
+            let pixel1 = collision.0;
+            let pixel2 = collision.1;
+            
+            println!("COL: ({}, {}) ({}, {})", pixel1.pos[0], pixel1.pos[1], pixel2.pos[0], pixel2.pos[1]);
+
+        }
     }
 
     pub fn print(&self, _verbose: bool) {
+        let mut stdout = stdout();
+        stdout.queue(cursor::SavePosition).unwrap();
         for y in 0..self.size[1] {
             print!("{:04}|", y);
             for x in 0..self.size[0] {
@@ -90,9 +97,8 @@ impl Simulation {
             }
             println!();
         }
-        //carrieg return size + 1 lines
-        MoveToPreviousLine((self.size[1] + 1).try_into().unwrap());
-
+        stdout.queue(cursor::RestorePosition).unwrap();
+        stdout.queue(terminal::Clear(terminal::ClearType::CurrentLine)).unwrap();
     }
                 
 

@@ -2,6 +2,7 @@ use rand::Rng;
 use piston_window::*;
 
 use crate::pixel::*;
+
 use crate::simulate::*;
 
 pub fn rect_pos(pos1: [u32; 2], pos2: [u32; 2]) -> [u32; 4] {
