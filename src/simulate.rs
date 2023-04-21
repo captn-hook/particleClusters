@@ -5,7 +5,7 @@ use crossterm::{QueueableCommand, cursor, terminal, ExecutableCommand};
 use std::{thread, time};
 use std::io::{Write, stdout};
 
-use colored::Colorize;g
+use colored::Colorize;
 
 use crate::pixel::*;
 use crate::draw::*;
@@ -15,7 +15,7 @@ pub struct Simulation {
     pub size: [u32; 2],
     pub scale: u32,
     pub window: PistonWindow,
-    pub grid: [[Pixel; 50]; 50],
+    pub grid: [[Pixel; 10]; 10],
     pub gravity: f64,
     pub friction: f64,
     pub mouse_pos: [u32; 2],
@@ -28,15 +28,15 @@ impl Simulation {
 
         let mut elements = ElementList::new();
 
-        const scale: u32 = 10;
-        const size: [u32; 2] = [50; 2];
+        const scale: u32 = 100;
+        const size: [u32; 2] = [10; 2];
         
         let mut gravity: f64 = 0.1;
         let mut friction: f64 = 0.99;        
         let mut mouse_pos = [0, 0];
         let mut edge_mode: bool = true;
         
-        let mut grid = [[Pixel::default(); 50]; 50];
+        let mut grid = [[Pixel::default(); 10]; 10];
         
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
@@ -65,26 +65,56 @@ impl Simulation {
     }
 
     pub fn update(&mut self, verbose: bool) {
-        let mut collisions: Vec<(Pixel, Pixel)> = vec![];
-        
+        let mut new_grid = [[Pixel::default(); 10]; 10];
+        //get list of pixels ordered by density
+        let mut pixel_list = Vec::new();
+
         for y in 0..self.size[1] {
             for x in 0..self.size[0] {
-                let mut pixel = self.grid[y as usize][x as usize];
-                let collide = pixel.update(self.grid, self.gravity, self.friction, self.edge_mode, [0, 0]);
-                //if collide option isnt none, add to collisions
-                if let Some((p1, p2)) = collide {
-                    collisions.push((p1, p2));
-                }
+                pixel_list.push(self.grid[y as usize][x as usize]);
             }
         }
 
-        for collision in collisions {
-            let pixel1 = collision.0;
-            let pixel2 = collision.1;
-            
-            println!("COL: ({}, {}) ({}, {})", pixel1.pos[0], pixel1.pos[1], pixel2.pos[0], pixel2.pos[1]);
+        pixel_list.sort_by(|a, b| b.density.partial_cmp(&a.density).unwrap());
 
+        //update each pixel and its swappee into new grid, set blocked, update pos
+        for mut pix in pixel_list {
+            if pix.is_blocked() {
+                continue;
+            }
+            let new_pos = pix.phys_step(self.friction, self.gravity, self.edge_mode);
+            let mut pos = pix.pos;
+            if pos == new_pos {
+                //no swap
+                pix.block();
+                new_grid[pos[1] as usize][pos[0] as usize] = pix;
+            } else {
+                //get one pixel in new pos dir from old pos
+                if new_pos[0] > pos[0] {
+                    pos[0] += 1;
+                } else if new_pos[0] < pos[0] {
+                    pos[0] -= 1;
+                }
+                if new_pos[1] > pos[1] {
+                    pos[1] += 1;
+                } else if new_pos[1] < pos[1] {
+                    pos[1] -= 1;
+                }
+
+                pos = wrapped_coord(pos, self.edge_mode, self.size);
+
+                //get swappee
+
+                let mut swappee = self.grid[pos[1] as usize][pos[0] as usize];
+                
+                swappee.block();
+                pix.block();
+
+                new_grid[new_pos[1] as usize][new_pos[0] as usize] = swappee;
+                new_grid[pos[1] as usize][pos[0] as usize] = pix;
+            }
         }
+        self.grid = new_grid;
     }
 
     pub fn print(&self, _verbose: bool) {
@@ -190,4 +220,35 @@ pub fn radius(pos: [u32; 2], r: u32, size: [u32; 2]) -> Vec<[u32; 2]> {
         }
     }
     vec
+}
+
+pub fn wrapped_coord(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2] {
+    let mut x = pos[0];
+    let mut y = pos[1];
+    if edge_mode {
+        //go to other side of grid
+        if x > size[0] - 1 {
+            x = 0;
+        } else if x < 0 {
+            x = size[0] - 1;
+        }
+        if y > size[1] - 1 {
+            y = 0;
+        } else if y < 0 {
+            y = size[1] - 1;
+        }
+    } else {
+        //clamp to edge
+        if x > size[0] - 1 {
+            x = size[0] - 1;
+        } else if x < 0 {
+            x = 0;
+        }
+        if y > size[1] - 1 {
+            y = size[1] - 1;
+        } else if y < 0 {
+            y = 0;
+        }
+    }
+    [x as u32, y as u32]
 }

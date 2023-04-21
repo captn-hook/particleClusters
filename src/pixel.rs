@@ -18,6 +18,8 @@ pub struct Pixel {
     pub min_force: f64,
     pub gravity_multiplier: f64,
     pub friction_multiplier: f64,
+
+    blocked: bool,
 }
 
 #[derive(Clone)]
@@ -52,8 +54,7 @@ impl PType {
 }
 
 impl Pixel {
-    pub fn new(typ: String, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64, element_list: &mut ElementList) -> Pixel {
-        let ptype = element_list.get(typ);
+    pub fn new(ptype: u8, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64) -> Pixel {
         Pixel {
             ptype,
             pos,
@@ -62,7 +63,26 @@ impl Pixel {
             density,
             min_force,
             gravity_multiplier,
-            friction_multiplier,
+            friction_multiplier,    
+            blocked: false,
+        }
+    }
+
+    pub fn spawn(typ: String, pos: [u32; 2]) -> Pixel {
+        if typ == "air" {
+            air(pos)
+        } else if typ == "sand" {
+            sand(pos)
+        } else if typ == "water" {
+            water(pos)
+        } else if typ == "lava" {
+            lava(pos)
+        } else if typ == "stone" {
+            stone(pos)
+        } else if typ == "brick" {
+            brick(pos)
+        } else {
+            air(pos)
         }
     }
 
@@ -70,105 +90,38 @@ impl Pixel {
         air([0, 0])
     }
 
-    pub fn wrapped_coord(pos: [i32; 2], wrap: bool) -> [u32; 2] {
-        let mut x = pos[0];
-        let mut y = pos[1];
-        if wrap {
-            //go to other side of grid
-            if x > 49 {
-                x = 0;
-            } else if x < 0 {
-                x = 49;
-            }
-            if y > 49 {
-                y = 0;
-            } else if y < 0 {
-                y = 49;
-            }
-        } else {
-            //clamp to edge
-            if x > 49 {
-                x = 49;
-            } else if x < 0 {
-                x = 0;
-            }
-            if y > 49 {
-                y = 49;
-            } else if y < 0 {
-                y = 0;
-            }
-        }
-        [x as u32, y as u32]
+    pub fn block(&mut self) {
+        self.blocked = true;
     }
 
-    pub fn adjacents(&self) -> [[u32; 2]; 8] {
-        let mut adjacent: [[u32; 2]; 8] = [[0; 2]; 8];
-        let mut x = self.pos[0];
-        let mut y = self.pos[1];
-
-        for ix in 0..3 {
-            for iy in 0..3 {
-                if ix == 1 && iy == 1 {
-                    continue;
-                }
-
-                let coord = [(x + ix) as i32, (y + iy) as i32];
-
-                let wrapped = Pixel::wrapped_coord(coord, false);
-
-                adjacent[(ix + iy) as usize] = wrapped;
-            }
-        }
-        adjacent
+    pub fn unblock(&mut self) {
+        self.blocked = false;
     }
 
-    fn phys(&mut self, wrap: bool) -> [u32; 2] {
-        //apply gravity, friction, etc, return next pos
-        
-        self.vel[1] += self.gravity_multiplier * self.density;
-
-        self.vel[0] *= self.friction_multiplier;
-        self.vel[1] *= self.friction_multiplier;
-
-        let mut next_pos = [(self.pos[0] as f64 + self.vel[0]) as u32, (self.pos[1] as f64 + self.vel[1]) as u32];
-
-        next_pos = Pixel::wrapped_coord([next_pos[0] as i32, next_pos[1] as i32], wrap);
-        
-        let adjacents = self.adjacents();
-
-        let mut closest = [0, 0];
-        let mut dist = 1000000.0;
-
-        for a in adjacents {
-            //get the closest adjacent pixel from next_pos
-            let x = ((a[0] as i32 - next_pos[0] as i32).abs() as f64).powi(2);
-            let y = ((a[1] as i32 - next_pos[1] as i32).abs() as f64).powi(2);
-            let d = (x + y).sqrt();
-            if d < dist {
-                dist = d;
-                closest = a;
-            }    
-        }
-
-        closest
+    pub fn is_blocked(&self) -> bool {
+        self.blocked
     }
 
-    //ok
-    //so/
-    //a pixel update cycle shoulde take a pixel COPT and a grid REFERENCE but not disturb the grid
-    //the COPY is to be modified at each step, subtracting from its velocity and adding to its position
-    //to get final postion for that frame
-    //IF THE PIXEL TRAVELS THRU ITS LIKE KINDA AND ENDS AT ITS LIKE KIND,
-    //"solid", ignore for now
-    //otherwise
-    //aPPEND THE COLLISIONS CHAIN
-    ////amd tjem
-    //fuck
-    pub fn update(&mut self, grid: [[Pixel; 50]; 50], gravity: f64, friction: f64, edge_mode: bool, step: [i32; 2]) -> Option<(Pixel, Pixel)> {
-        //get result pos
-        let pos = self.phys(edge_mode);
+    pub fn update_pos(&mut self, pos: [u32; 2]) {
+        self.pos = pos;
+    }
 
-        None
+    pub fn phys_step(&mut self, friction: f64, gravity: f64, edge_mode: bool) -> [u32; 2] {
+        //apply friction
+        self.vel[0] *= friction * self.friction_multiplier;
+        self.vel[1] *= friction * self.friction_multiplier;
+
+        //apply gravity
+        self.vel[1] += gravity * self.gravity_multiplier;
+
+        //apply velocity
+        let mut new_pos = [self.pos[0] as i32, self.pos[1] as i32];
+        new_pos[0] += self.vel[0] as i32;
+        new_pos[1] += self.vel[1] as i32;
+
+        let return_pos = [new_pos[0] as u32, new_pos[1] as u32];
+
+        return_pos
     }
 
     pub fn print(&self) -> String {
@@ -215,66 +168,6 @@ impl Pixel {
         return printstr.to_string();
     }
 
-    pub fn spawn(typ: String, pos: [u32; 2]) -> Pixel {
-        if typ == "air" {
-            air(pos)
-        } else if typ == "sand" {
-            sand(pos)
-        } else if typ == "water" {
-            water(pos)
-        } else if typ == "lava" {
-            lava(pos)
-        } else if typ == "stone" {
-            stone(pos)
-        } else if typ == "brick" {
-            brick(pos)
-        } else {
-            air(pos)
-        }
-    }
-
-    pub fn get_update(&mut self, gravity: f64, friction: f64, size: [u32; 2], edge_mode: bool) -> [u32; 2] {
-        let mut poscp = self.pos;
-        let mut velcp = self.vel;
-        velcp[1] += gravity * self.gravity_multiplier;
-        velcp[0] *= friction * self.friction_multiplier;
-        velcp[1] *= friction * self.friction_multiplier;
-        poscp[0] += velcp[0].round() as u32;
-        poscp[1] += velcp[1].round() as u32;
-
-        if edge_mode {
-            //edge true, bounce off edges
-            if poscp[0] < 0 {
-                poscp[0] = 0;
-                velcp[0] *= -1.0;
-            } else if poscp[0] > size[0] - 1 {
-                poscp[0] = size[0] - 1;
-                velcp[0] *= -1.0;
-            } 
-            if poscp[1] < 0 {
-                poscp[1] = 0;
-                velcp[1] *= -1.0;
-            } else if poscp[1] > size[1] - 1 {
-                poscp[1] = size[1] - 1;
-                velcp[1] *= -1.0;
-            }
-        } else {
-            //edge false, wrap around edges
-            if poscp[0] < 0 {
-                poscp[0] = size[0] - 1;
-            } else if poscp[0] > size[0] - 1 {
-                poscp[0] = 0;
-            } 
-            if poscp[1] < 0 {
-                poscp[1] = size[1] - 1;
-            } else if poscp[1] > size[1] - 1 {
-                poscp[1] = 0;
-            }
-        }
-
-        poscp        
-    }
-
     pub fn draw(&self, context: Context, graphics: &mut G2d, scale: u32, ruler: bool) {
         
         let coords = screem(self.pos, scale);
@@ -291,7 +184,7 @@ impl Pixel {
     }
 }
 
-pub fn pixel_draw(pixels: [[Pixel; 50]; 50], context: Context, graphics: &mut G2d, scale: u32) {
+pub fn pixel_draw(pixels: [[Pixel; 10]; 10], context: Context, graphics: &mut G2d, scale: u32) {
     for (_y, row) in pixels.iter().enumerate() {
         for (_x, pixel) in row.iter().enumerate() {
             
