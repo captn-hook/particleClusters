@@ -6,7 +6,7 @@ pub struct ElementList {
     pub elements: Vec<String>,
     pub element_codes: Vec<u8>,
     
-    length: usize,
+    _lenght: usize,
 }
 
 impl ElementList {
@@ -20,6 +20,8 @@ impl ElementList {
             "stone".to_string(),
             "brick".to_string(),
             "wood".to_string(),
+            "smoke".to_string(),
+            "glass".to_string(),
         ];
         let element_codes = vec![
             0,
@@ -30,17 +32,19 @@ impl ElementList {
             5,
             6,
             7,
+            8,
+            9,
         ];
-        let length = elements.len();
+        let _lenght = elements.len();
         ElementList {
             elements,
             element_codes,
-            length,
+            _lenght,
         }
     }
 
-    pub fn get(&self, index: String) -> u8 {
-        for i in 0..self.length {
+    pub fn _get(&self, index: String) -> u8 {
+        for i in 0..self._lenght {
             if self.elements[i] == index {
                 return self.element_codes[i];
             }
@@ -48,8 +52,8 @@ impl ElementList {
         return 0;
     }
 
-    pub fn get_name(&self, index: u8) -> String {
-        for i in 0..self.length {
+    pub fn _get_name(&self, index: u8) -> String {
+        for i in 0..self._lenght {
             if self.element_codes[i] == index {
                 return self.elements[i].clone();
             }
@@ -57,26 +61,56 @@ impl ElementList {
         return "default".to_string();
     }
 
-    pub fn len(&self) -> usize {
-        self.length
+    pub fn _len(&self) -> usize {
+        self._lenght
     }
 
-    pub fn add(&mut self, name: String) {
+    pub fn _add(&mut self, name: String) {
         self.elements.push(name);
-        self.element_codes.push(self.length as u8);
-        self.length += 1;
+        self.element_codes.push(self._lenght as u8);
+        self._lenght += 1;
     }
 
-    pub fn remove(&mut self, name: String) {
-        for i in 0..self.length {
+    pub fn _remove(&mut self, name: String) {
+        for i in 0..self._lenght {
             if self.elements[i] == name {
                 self.elements.remove(i);
                 self.element_codes.remove(i);
-                self.length -= 1;
+                self._lenght -= 1;
                 return;
             }
         }
     }
+}
+
+pub fn glass(pos: [u32; 2]) -> Pixel {
+    let r = rand_color(0.5, 0.1);
+    let g = rand_color(0.5, 0.1);
+    let b = rand_color(0.6, 0.2);
+
+    Pixel::new(9,
+        pos,
+        [0.0; 2],
+        [r, g, b, 1.0],
+        0.4,
+        0.45,
+        1.2,
+        0.99,
+    )
+}
+
+pub fn smoke(pos: [u32; 2]) -> Pixel {
+    let cl = rand_color_grey(0.6, 0.1);
+
+    Pixel::new(8,
+        pos,
+        [0.0; 2],
+        cl,
+        0.4,
+        0.45,
+        1.2,
+        0.99,
+    )
 }
 
 pub fn wood(pos: [u32; 2]) -> Pixel {

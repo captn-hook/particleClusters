@@ -10,10 +10,10 @@ pub fn rect_pos(pos1: [u32; 2], pos2: [u32; 2]) -> [u32; 4] {
     //four cases: x1 < x2, x1 > x2, y1 < y2, y1 > y2
     let x = pos1[0] as i32 - pos2[0] as i32;
     let y = pos1[1] as i32 - pos2[1] as i32;
-    let mut x1: u32;
-    let mut x2: u32;
-    let mut y1: u32;
-    let mut y2: u32;
+    let x1: u32;
+    let x2: u32;
+    let y1: u32;
+    let y2: u32;
 
     if x < 0 {
         //println!("x < 0");
@@ -56,7 +56,7 @@ pub fn draw_cursor_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) 
     let line2 = [tx, ty, tx, by];
     let line3 = [tx, by, lx, by];
     let line4 = [lx, ty, lx, by];
-    for (i, line) in [line, line2, line3, line4].iter().enumerate() {
+    for (_i, line) in [line, line2, line3, line4].iter().enumerate() {
         let lined = line::Line::new([0.0, 0.0, 0.0, 1.0], 1.0);
         lined.draw(*line, &context.draw_state, context.transform, graphics);
     }
@@ -83,20 +83,19 @@ pub fn draw_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) {
     let line2 = [tx, ty, tx, by];
     let line3 = [tx, by, lx, by];
     let line4 = [lx, ty, lx, by];
-    for (i, line) in [line, line2, line3, line4].iter().enumerate() {
+    for (_i, line) in [line, line2, line3, line4].iter().enumerate() {
         let lined = line::Line::new([0.0, 0.0, 0.0, 1.0], 1.0);
         lined.draw(*line, &context.draw_state, context.transform, graphics);
     }
 
 }
 
-pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixel>>, scale: u32, case: u32, pos: [u32; 4], size: [u32; 2]) {
+pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixel>>, scale: u32, case: u8, pos: [u32; 4], size: [u32; 2]) {
     window.draw_2d(event, |context, graphics, _| {
         clear([1.0; 4], graphics);
         //pixel.pixel_draw
         pixel_draw(&*pixels, context, graphics, scale);
-        //draw cursor\
-        let mut dpos = [0.0; 4];
+        //draw cursor
         if case == 1 {
             //holding left click, draw from last click to mouse pos
             draw_outline(get_screen_edge(pos, scale), context, graphics);
@@ -105,7 +104,7 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixe
             //radius
             let radius_vec = radius([pos[0], pos[1]], pos[2], size);
             //get all outward facing edges as segments vec<[[f64; 2]; 2]>
-            let mut segments: Vec<[[f64; 2]; 2]> = Vec::new();
+            let mut _segments: Vec<[[f64; 2]; 2]> = Vec::new();
 
             //get bounding box
             let mut bb_x = [radius_vec[0][0], radius_vec[0][0]];
@@ -141,7 +140,7 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixe
         
 
 
-pub fn rand_color_margin(color: [f32; 4], margin: f32) -> [f32; 4] {
+pub fn _rand_color_margin(color: [f32; 4], margin: f32) -> [f32; 4] {
     let mut rng = rand::thread_rng();
     let mut new_color = color;
     for i in 0..3 {

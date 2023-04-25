@@ -1,13 +1,11 @@
 use piston_window::*;
 use rand::Rng;
-use crossterm::{QueueableCommand, cursor, terminal, ExecutableCommand};
+use crossterm::{QueueableCommand, cursor, terminal};
 
-use std::{thread, time};
-use std::io::{Write, stdout};
+use std::io::stdout;
 
-use colored::Colorize;
 
-use crate::{pixel::*, pause};
+use crate::{pixel::*};
 use crate::draw::*;
 use crate::elements::*;
 
@@ -28,20 +26,20 @@ impl Simulation {
 
         let elements = ElementList::new();
 
-        const scale: u32 = 10;
-        const size: [u32; 2] = [50; 2];
+        const SCALE: u32 = 10;
+        const SIZE: [u32; 2] = [50; 2];
         
-        let mut gravity: f64 = 1.0;
-        let mut friction: f64 = 0.99;        
-        let mut mouse_pos = [0, 0];
-        let mut edge_mode: bool = true;
+        let gravity: f64 = 1.0;
+        let friction: f64 = 0.99;        
+        let mouse_pos = [0, 0];
+        let edge_mode: bool = true;
         
         let mut grid: Vec<Vec<Pixel>> = vec![];
         
         //SET pos in pixels to index in grid
-        for y in 0..size[1] {
+        for y in 0..SIZE[1] {
             let mut row: Vec<Pixel> = vec![];
-            for x in 0..size[0] {
+            for x in 0..SIZE[0] {
                 row.push(Pixel::spawn("air".to_string(), [x, y]));
             }
             grid.push(row);
@@ -49,14 +47,14 @@ impl Simulation {
         
         //temp check to make sure air is set
 
-        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * scale, size[1] * scale])
+        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [SIZE[0] * SCALE, SIZE[1] * SCALE])
             .exit_on_esc(true)
             .build()
             .unwrap();
 
         Simulation {
-            size,
-            scale,
+            size: SIZE,
+            scale: SCALE,
             window,
             grid,
             gravity,
@@ -67,7 +65,7 @@ impl Simulation {
         }
     }
 
-    pub fn update(&mut self, verbose: bool) {
+    pub fn update(&mut self, _verbose: bool) {
 
         //println!("UPDATE"); 
         self.empty_check(self.grid.clone());
@@ -80,7 +78,6 @@ impl Simulation {
         for y in 0..self.size[1] {
             for x in 0..self.size[0] {
                 let mut pix = self.grid[y as usize][x as usize];
-                pix.unblock();
                 pix.pos = [x, y];
               
                 //add randomness to low force particles
@@ -121,7 +118,7 @@ impl Simulation {
 
         for pix in &pixel_list {
             let pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
-            let mut new_pos = wrapped_coord(pos, self.edge_mode, self.size);
+            let new_pos = wrapped_coord(pos, self.edge_mode, self.size);
             //if no movement, skip
             if pix.ptype == 0 || new_pos == pix.pos || self.grid[new_pos[1] as usize][new_pos[0] as usize].ptype == pix.ptype || pix.density < self.grid[new_pos[1] as usize][new_pos[0] as usize].density {
                 //println!("NO MOVE: {:?}", pix.pos);
@@ -201,7 +198,7 @@ impl Simulation {
 
     //replace air with water below mouse position
     pub fn sea(&mut self, typ: String) {
-        let x = self.mouse_pos[0];
+        let _x = self.mouse_pos[0];
         let y = self.mouse_pos[1];
         for x in 0..self.size[0] {
             for y in y..self.size[1] {
@@ -218,9 +215,9 @@ impl Simulation {
     }
 
     //place pixel (air) at mouse position r=radius
-    pub fn erase(&mut self, r: u32, typ: String ) {
-        let x = self.mouse_pos[0];
-        let y = self.mouse_pos[1];
+    pub fn erase(&mut self, r: u32, _typ: String ) {
+        let _x = self.mouse_pos[0];
+        let _y = self.mouse_pos[1];
         for pixel in self.radius_iter(r) {
             self.grid[pixel[1] as usize][pixel[0] as usize] = air([pixel[0], pixel[1]]);
         }
@@ -293,7 +290,7 @@ pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2]
     [x as u32, y as u32]            
 }
 
-pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
+pub fn _adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
     let mut vec = Vec::new();
     
     for i in -1..2 {

@@ -1,12 +1,9 @@
-use rand::Rng;
 use piston_window::*;
 use colored::Colorize;
 
 use crate::draw::*;
 
 use crate::elements::*;
-
-use crate::simulate::*;
 
 #[derive(Clone, Copy)]
 pub struct Pixel {
@@ -18,8 +15,6 @@ pub struct Pixel {
     pub min_force: f64,
     pub gravity_multiplier: f64,
     pub friction_multiplier: f64,
-
-    blocked: bool,
 }
 
 #[derive(Clone)]
@@ -30,7 +25,7 @@ pub struct PType {
 }
 
 impl PType {
-    pub fn new(name: String) -> PType {
+    pub fn _new(name: String) -> PType {
         
         let interacts: Vec<String> = vec![];
         PType {
@@ -39,11 +34,11 @@ impl PType {
         }
     } 
     
-    pub fn add_interact(&mut self, interact: String) {
+    pub fn _add_interact(&mut self, interact: String) {
         self.interact.push(interact);
     }
 
-    pub fn fetch_interact(&self, interact: String) -> bool {
+    pub fn _fetch_interact(&self, interact: String) -> bool {
         for i in &self.interact {
             if i == &interact {
                 return  true;
@@ -64,7 +59,6 @@ impl Pixel {
             min_force,
             gravity_multiplier,
             friction_multiplier,    
-            blocked: false,
         }
     }
 
@@ -99,24 +93,7 @@ impl Pixel {
             min_force: 0.0,
             gravity_multiplier: 0.0,
             friction_multiplier: 0.0,
-            blocked: false,
         }
-    }
-
-    pub fn block(&mut self) {
-        self.blocked = true;
-    }
-
-    pub fn unblock(&mut self) {
-        self.blocked = false;
-    }
-
-    pub fn is_blocked(&self) -> bool {
-        self.blocked
-    }
-
-    pub fn update_pos(&mut self, pos: [u32; 2]) {
-        self.pos = pos;
     }
 
     pub fn print(&self) -> String {

@@ -13,7 +13,7 @@ use draw::*;
 mod elements;
 use std::io::{stdin, stdout, Read, Write};
 
-fn pause() {
+fn _pause() {
     let mut stdout = stdout();
     stdout.write(b"Press Enter to continue...").unwrap();
     stdout.flush().unwrap();
@@ -31,15 +31,15 @@ fn main() {
     let mut shift = false;
     let mut ctrl = false;
     let mut alt = false;
-    let mut tab = false;
+    let mut _tab = false;
     
     while let Some(event) = sim.window.next() {
 
         //draw on render
-        if let Some(args) = event.render_args() {
+        if let Some(_args) = event.render_args() {
             //prepare cursor arguments, 
             //cursor is drawn on top of everything else
-            let mut case = 0;
+            let case: u8;
             let mut pos = [sim.mouse_pos[0], sim.mouse_pos[1], last_left_click[0], last_left_click[1]];
                 
             if left_click {
@@ -67,11 +67,11 @@ fn main() {
         //track mouse position
         if let Some(pos) = event.mouse_cursor_args() {
             //integer and scaled mouse position
-            let x = pos[0] as u32 / sim.scale;
-            let y = pos[1] as u32 / sim.scale;
+            let x = pos[0] / sim.scale as f64;
+            let y = pos[1] / sim.scale as f64;
             //limit mouse position to grid
-            if 0 <= x && x < sim.size[0] && 0 <= y && y < sim.size[1] {
-                sim.mouse_pos = [x, y];
+            if 0.0 <= x && x < sim.size[0] as f64 && 0.0 <= y && y < sim.size[1] as f64 {
+                sim.mouse_pos = [x as u32, y as u32];
                 //println!("MOUSE {} {}", x, y);
             }
         }
@@ -121,7 +121,7 @@ fn main() {
                 alt = true;
             }
             if key == Key::Tab {
-                tab = true;
+                _tab = true;
             }
         }
         //k up
@@ -139,7 +139,7 @@ fn main() {
                 alt = false;
             }
             if key == Key::Tab {
-                tab = false;
+                _tab = false;
                 sim.edge_mode = !sim.edge_mode;
             }
         }
@@ -168,7 +168,7 @@ fn main() {
 
 
         //update simulation
-        if let Some(args) = event.update_args() {
+        if let Some(_args) = event.update_args() {
             let verbose = false;
             if verbose {
                 println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
