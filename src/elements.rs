@@ -12,6 +12,7 @@ pub struct ElementList {
 impl ElementList {
     pub fn new() -> ElementList {
         let elements = vec![
+            "default".to_string(),
             "air".to_string(),
             "sand".to_string(),
             "water".to_string(),
@@ -26,6 +27,7 @@ impl ElementList {
             3,
             4,
             5,
+            6,
         ];
         let length = elements.len();
         ElementList {

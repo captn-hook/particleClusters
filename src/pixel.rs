@@ -82,12 +82,23 @@ impl Pixel {
         } else if typ == "brick" {
             brick(pos)
         } else {
-            air(pos)
+            Pixel::default()
         }
     }
 
     pub fn default() -> Pixel {
-        air([0, 0])
+        //null pixel, should only be used to instantiate empty grid, then replaced
+        Pixel {
+            ptype: 0,
+            pos: [0, 0],
+            vel: [0.0, 0.0],
+            color: [1.0, 0.0, 1.0, 1.0],
+            density: 0.0,
+            min_force: 0.0,
+            gravity_multiplier: 0.0,
+            friction_multiplier: 0.0,
+            blocked: false,
+        }
     }
 
     pub fn block(&mut self) {
@@ -104,24 +115,6 @@ impl Pixel {
 
     pub fn update_pos(&mut self, pos: [u32; 2]) {
         self.pos = pos;
-    }
-
-    pub fn phys_step(&mut self, friction: f64, gravity: f64, edge_mode: bool) -> [u32; 2] {
-        //apply friction
-        self.vel[0] *= friction * self.friction_multiplier;
-        self.vel[1] *= friction * self.friction_multiplier;
-
-        //apply gravity
-        self.vel[1] += gravity * self.gravity_multiplier;
-
-        //apply velocity
-        let mut new_pos = [self.pos[0] as i32, self.pos[1] as i32];
-        new_pos[0] += self.vel[0] as i32;
-        new_pos[1] += self.vel[1] as i32;
-
-        let return_pos = [new_pos[0] as u32, new_pos[1] as u32];
-
-        return_pos
     }
 
     pub fn print(&self) -> String {
@@ -159,7 +152,6 @@ impl Pixel {
         } else {
             printstr = printstr.on_white().to_string();
         }
-
 
 
         if direct {
