@@ -87,25 +87,10 @@ impl Simulation {
 
         for pix in &pixel_list {
             let mut new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
-
+            new_pos = wrapped_coord(new_pos, self.edge_mode, self.SIZE);
             //if no movement, skip
             if new_pos == [pix.pos[0] as i32, pix.pos[1] as i32] {
                 continue;
-            //if out of bounds, limit (or wrap)
-            } else {
-                if new_pos[0] < 0 {
-                    if self.edge_mode {
-                        new_pos[0] = 0;
-                    } else {
-                        new_pos[0] = self.SIZE[0] as i32 - 1;
-                    }
-                } else if new_pos[0] >= self.SIZE[0] as i32 {
-                    if self.edge_mode {
-                        new_pos[0] = self.SIZE[0] as i32 - 1;
-                    } else {
-                        new_pos[0] = 0;
-                    }
-                }
             }
             //add move to list
             pixel_pairs.push([pix.pos, [new_pos[0] as u32, new_pos[1] as u32]]);
@@ -230,33 +215,35 @@ pub fn radius(pos: [u32; 2], r: u32, SIZE: [u32; 2]) -> Vec<[u32; 2]> {
     vec
 }
 
-pub fn wrapped_coord(pos: [u32; 2], edge_mode: bool, SIZE: [u32; 2]) -> [u32; 2] {
+pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, SIZE: [u32; 2]) -> [u32; 2] {
+    let mut bx = SIZE[0] as i32 - 1;
+    let mut by = SIZE[1] as i32 - 1;
     let mut x = pos[0];
     let mut y = pos[1];
     if edge_mode {
         //go to other side of grid
-        if x > SIZE[0] - 1 {
+        if x < 0 {
+            x = bx;
+        } else if x > bx {
             x = 0;
-        } else if x < 0 {
-            x = SIZE[0] - 1;
         }
-        if y > SIZE[1] - 1 {
+        if y < 0 {
+            y = by;
+        } else if y > by {
             y = 0;
-        } else if y < 0 {
-            y = SIZE[1] - 1;
         }
     } else {
-        //clamp to edge
-        if x > SIZE[0] - 1 {
-            x = SIZE[0] - 1;
-        } else if x < 0 {
+        //stay on same side of grid
+        if x < 0 {
             x = 0;
+        } else if x > bx {
+            x = bx;
         }
-        if y > SIZE[1] - 1 {
-            y = SIZE[1] - 1;
-        } else if y < 0 {
+        if y < 0 {
             y = 0;
+        } else if y > by {
+            y = by;
         }
     }
-    [x as u32, y as u32]
+    [x as u32, y as u32]            
 }
