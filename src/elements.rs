@@ -19,6 +19,7 @@ impl ElementList {
             "lava".to_string(),
             "stone".to_string(),
             "brick".to_string(),
+            "wood".to_string(),
         ];
         let element_codes = vec![
             0,
@@ -28,6 +29,7 @@ impl ElementList {
             4,
             5,
             6,
+            7,
         ];
         let length = elements.len();
         ElementList {
@@ -52,7 +54,7 @@ impl ElementList {
                 return self.elements[i].clone();
             }
         }
-        return "air".to_string();
+        return "default".to_string();
     }
 
     pub fn len(&self) -> usize {
@@ -77,20 +79,25 @@ impl ElementList {
     }
 }
 
+pub fn wood(pos: [u32; 2]) -> Pixel {
+    let r = rand_color(0.5, 0.15);
+    let g = rand_color(0.3, 0.05);
+
+    Pixel::new(7,
+        pos,
+        [0.0; 2],
+        [r, g, 0.0, 1.0],
+        0.4,
+        0.45,
+        1.2,
+        0.99,
+    )
+}
+
 pub fn air(pos: [u32; 2]) -> Pixel {
     let cl = rand_color_grey(1.0, 0.05);
-    // Pixel {
-    //     ptype: 0,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: cl,
-    //     density: 0.01,
-    //     min_force: 0.0,
-    //     gravity_multiplier: 0.01,
-    //     friction_multiplier: 0.95,
-    //     blocked: false,
-    // }
-    Pixel::new(0,
+
+    Pixel::new(1,
         pos,
         [0.0; 2],
         cl,
@@ -104,23 +111,13 @@ pub fn air(pos: [u32; 2]) -> Pixel {
 pub fn sand(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.8, 0.15);
     let g = rand_color(0.8, 0.1);
-    // Pixel {
-    //     ptype: 1,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: [r, g, 0.0, 1.0],
-    //     density: 0.8,
-    //     min_force: 0.01,
-    //     gravity_multiplier: 1.2,
-    //     friction_multiplier: 0.99,
-    //     blocked: false,
-    // }
-    Pixel::new(1,
+
+    Pixel::new(2,
         pos,
         [0.0; 2],
         [r, g, 0.0, 1.0],
         0.8,
-        0.01,
+        0.4,
         1.2,
         0.99,
     )
@@ -128,18 +125,8 @@ pub fn sand(pos: [u32; 2]) -> Pixel {
 
 pub fn water(pos: [u32; 2]) -> Pixel {
     let b = rand_color(0.8, 0.15);
-    // Pixel {
-    //     ptype: 2,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: [0.0, 0.0, b, 1.0],
-    //     density: 0.5,
-    //     min_force: 0.0,
-    //     gravity_multiplier: 1.0,
-    //     friction_multiplier: 0.99,
-    //     blocked: false,
-    // }
-    Pixel::new(2,
+
+    Pixel::new(3,
         pos,
         [0.0; 2],
         [0.0, 0.0, b, 1.0],
@@ -152,23 +139,13 @@ pub fn water(pos: [u32; 2]) -> Pixel {
 
 pub fn lava(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.8, 0.15);
-    // Pixel {
-    //     ptype: 3,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: [r, 0.0, 0.0, 1.0],
-    //     density: 0.9,
-    //     min_force: 0.0,
-    //     gravity_multiplier: 1.0,
-    //     friction_multiplier: 0.95,
-    //     blocked: false,
-    // }
-    Pixel::new(3,
+
+    Pixel::new(4,
         pos,
         [0.0; 2],
         [r, 0.0, 0.0, 1.0],
         0.9,
-        0.0,
+        0.2,
         1.0,
         0.95,
     )
@@ -176,23 +153,13 @@ pub fn lava(pos: [u32; 2]) -> Pixel {
 
 pub fn stone(pos: [u32; 2]) -> Pixel {
     let cl = rand_color_grey(0.1, 0.25);
-    // Pixel {
-    //     ptype: 4,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: cl,
-    //     density: 0.94,
-    //     min_force: 0.0,
-    //     gravity_multiplier: 1.0,
-    //     friction_multiplier: 0.99,
-    //     blocked: false,
-    // }
-    Pixel::new(4,
+
+    Pixel::new(5,
         pos,
         [0.0; 2],
         cl,
         0.94,
-        0.0,
+        0.6,
         1.0,
         0.99,
     )
@@ -202,23 +169,13 @@ pub fn brick(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.8, 0.15);
     let g = rand_color(0.4, 0.1);
     let b = rand_color(0.2, 0.1);
-    // Pixel {
-    //     ptype: 5,
-    //     pos,
-    //     vel: [0.0; 2],
-    //     color: [r, g, b, 1.0],
-    //     density: 0.98,
-    //     min_force: 0.0,
-    //     gravity_multiplier: 1.0,
-    //     friction_multiplier: 0.99,
-    //     blocked: false,
-    // }
-    Pixel::new(5,
+
+    Pixel::new(6,
         pos,
         [0.0; 2],
         [r, g, b, 1.0],
         0.98,
-        0.0,
+        1.1,
         1.0,
         0.99,
     )

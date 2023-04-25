@@ -30,6 +30,8 @@ fn main() {
     let mut space = false;
     let mut shift = false;
     let mut ctrl = false;
+    let mut alt = false;
+    let mut tab = false;
     
     while let Some(event) = sim.window.next() {
 
@@ -115,6 +117,12 @@ fn main() {
             if key == Key::LCtrl {
                 ctrl = true;
             }
+            if key == Key::LAlt {
+                alt = true;
+            }
+            if key == Key::Tab {
+                tab = true;
+            }
         }
         //k up
         if let Some(Button::Keyboard(key)) = event.release_args() {
@@ -126,6 +134,13 @@ fn main() {
             }
             if key == Key::LCtrl {
                 ctrl = false;
+            }
+            if key == Key::LAlt {
+                alt = false;
+            }
+            if key == Key::Tab {
+                tab = false;
+                sim.edge_mode = !sim.edge_mode;
             }
         }
 
@@ -146,6 +161,9 @@ fn main() {
         }
         if ctrl {
             sim.place_pixel("lava".to_string());
+        }
+        if alt {
+            sim.place_pixel("wood".to_string());
         }
 
 

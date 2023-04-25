@@ -7,7 +7,7 @@ use std::io::{Write, stdout};
 
 use colored::Colorize;
 
-use crate::pixel::*;
+use crate::{pixel::*, pause};
 use crate::draw::*;
 use crate::elements::*;
 
@@ -15,7 +15,7 @@ pub struct Simulation {
     pub size: [u32; 2],
     pub scale: u32,
     pub window: PistonWindow,
-    pub grid: [[Pixel; 5]; 5],
+    pub grid: Vec<Vec<Pixel>>,
     pub gravity: f64,
     pub friction: f64,
     pub mouse_pos: [u32; 2],
@@ -28,22 +28,23 @@ impl Simulation {
 
         let elements = ElementList::new();
 
-        const scale: u32 = 120;
-        const size: [u32; 2] = [5; 2];
+        const scale: u32 = 10;
+        const size: [u32; 2] = [50; 2];
         
         let mut gravity: f64 = 1.0;
         let mut friction: f64 = 0.99;        
         let mut mouse_pos = [0, 0];
-        let mut edge_mode: bool = false;
+        let mut edge_mode: bool = true;
         
-        let mut grid = [[Pixel::default(); 5]; 5];
+        let mut grid: Vec<Vec<Pixel>> = vec![];
         
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
+            let mut row: Vec<Pixel> = vec![];
             for x in 0..size[0] {
-                grid[y as usize][x as usize] = Pixel::spawn("air".to_string(), [x, y]);
-
+                row.push(Pixel::spawn("air".to_string(), [x, y]));
             }
+            grid.push(row);
         }
         
         //temp check to make sure air is set
@@ -69,7 +70,8 @@ impl Simulation {
     pub fn update(&mut self, verbose: bool) {
 
         //println!("UPDATE"); 
-        //self.empty_check(self.grid);
+        self.empty_check(self.grid.clone());
+        //pause();
 
         let mut new_grid = self.grid.clone();
         //get list of pixels ordered by and velocity
@@ -80,11 +82,33 @@ impl Simulation {
                 let mut pix = self.grid[y as usize][x as usize];
                 pix.unblock();
                 pix.pos = [x, y];
+              
+                //add randomness to low force particles
+                let move_chance: f64;
+                let mut rng = rand::thread_rng();
+                if pix.min_force == 0.0 {
+                    move_chance = 1.0;
+                } else if pix.min_force < 0.5 {
+                    move_chance = rng.gen_range(0.0..1.0 - pix.min_force);
+                } else {
+                    move_chance = 0.0;
+                }
 
-                pix.vel = [pix.vel[0] * self.friction, pix.vel[1] * self.friction];
+                if move_chance > pix.min_force {
+                    pix.vel[0] += rng.gen_range(-self.gravity * (2.0 - pix.min_force)..self.gravity * (2.0 - pix.min_force));
+                    pix.vel[1] += rng.gen_range(-self.gravity * (1.4 - pix.min_force)..self.gravity * (1.0 - pix.min_force));
+                }
+                  
+                pix.vel = [pix.vel[0] * self.friction * pix.friction_multiplier, pix.vel[1] * self.friction * pix.friction_multiplier];
 
                 pix.vel[1] += pix.gravity_multiplier * self.gravity;
-
+                
+                if pix.min_force > pix.vel[0].abs() {
+                    pix.vel[0] = 0.0;
+                } 
+                if pix.min_force > pix.vel[1].abs() {
+                    pix.vel[1] = 0.0;
+                }
                 //println!("PIXEL VEL: {:?}", pix.vel);
 
                 pixel_list.push(pix);
@@ -97,13 +121,13 @@ impl Simulation {
 
         for pix in &pixel_list {
             let pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
-            let new_pos = wrapped_coord(pos, self.edge_mode, self.size);
+            let mut new_pos = wrapped_coord(pos, self.edge_mode, self.size);
             //if no movement, skip
-            if new_pos == pix.pos || pix.ptype == 0 || self.grid[new_pos[1] as usize][new_pos[0] as usize].ptype == pix.ptype || pix.density < self.grid[new_pos[1] as usize][new_pos[0] as usize].density {
+            if pix.ptype == 0 || new_pos == pix.pos || self.grid[new_pos[1] as usize][new_pos[0] as usize].ptype == pix.ptype || pix.density < self.grid[new_pos[1] as usize][new_pos[0] as usize].density {
                 //println!("NO MOVE: {:?}", pix.pos);
                 continue;
             } else {
-                //println!("MOVE: {:?} {:?}", pix.pos, new_pos);
+                //println!("MOVE: {:?} {:?}", pix.pos, new_pos);           
             }
             //add move to list
             pixel_pairs.push([pix.pos, [new_pos[0] as u32, new_pos[1] as u32]]);
@@ -126,12 +150,13 @@ impl Simulation {
             new_grid[new_pos[1] as usize][new_pos[0] as usize] = pix;
         }
 
-        //self.empty_check(new_grid);       
+        self.empty_check(new_grid.clone());   
 
         self.grid = new_grid;
+
     }
 
-    pub fn empty_check(&self, grid: [[Pixel; 5]; 5]) {
+    pub fn empty_check(&self, grid: Vec<Vec<Pixel>>) {
         //temp check, make sure no type 0 pixels
         for y in 0..self.size[1] {
             for x in 0..self.size[0] {
@@ -266,4 +291,22 @@ pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2]
         }
     }
     [x as u32, y as u32]            
+}
+
+pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
+    let mut vec = Vec::new();
+    
+    for i in -1..2 {
+        for j in -1..2 {
+            if i != 0 || j != 0 {
+                let x = pos[0] as i32 + i;
+                let y = pos[1] as i32 + j;
+                let coord = wrapped_coord([x, y], edge_mode, size);
+                if coord != pos {
+                    vec.push(coord);
+                }
+            }
+        }
+    }
+    vec
 }

@@ -81,6 +81,8 @@ impl Pixel {
             stone(pos)
         } else if typ == "brick" {
             brick(pos)
+        } else if typ == "wood" {
+            wood(pos)
         } else {
             Pixel::default()
         }
@@ -176,7 +178,7 @@ impl Pixel {
     }
 }
 
-pub fn pixel_draw(pixels: [[Pixel; 5]; 5], context: Context, graphics: &mut G2d, scale: u32) {
+pub fn pixel_draw(pixels: &Vec<Vec<Pixel>>, context: Context, graphics: &mut G2d, scale: u32) {
     for (_y, row) in pixels.iter().enumerate() {
         for (_x, pixel) in row.iter().enumerate() {
             
