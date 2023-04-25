@@ -68,8 +68,8 @@ impl Simulation {
 
     pub fn update(&mut self, verbose: bool) {
 
-        println!("UPDATE"); 
-        self.empty_check(self.grid);
+        //println!("UPDATE"); 
+        //self.empty_check(self.grid);
 
         let mut new_grid = self.grid.clone();
         //get list of pixels ordered by and velocity
@@ -85,7 +85,7 @@ impl Simulation {
 
                 pix.vel[1] += pix.gravity_multiplier * self.gravity;
 
-                println!("PIXEL VEL: {:?}", pix.vel);
+                //println!("PIXEL VEL: {:?}", pix.vel);
 
                 pixel_list.push(pix);
             }
@@ -99,40 +99,34 @@ impl Simulation {
             let pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
             let new_pos = wrapped_coord(pos, self.edge_mode, self.size);
             //if no movement, skip
-            if new_pos == pix.pos {
+            if new_pos == pix.pos || pix.ptype == 0 || self.grid[new_pos[1] as usize][new_pos[0] as usize].ptype == pix.ptype || pix.density < self.grid[new_pos[1] as usize][new_pos[0] as usize].density {
                 //println!("NO MOVE: {:?}", pix.pos);
                 continue;
             } else {
-                println!("MOVE: {:?} {:?}", pix.pos, new_pos);
+                //println!("MOVE: {:?} {:?}", pix.pos, new_pos);
             }
             //add move to list
             pixel_pairs.push([pix.pos, [new_pos[0] as u32, new_pos[1] as u32]]);
         }
         
         //for every move, swap pixels
-        //if new_grid pos is empty, grab from old grid
         for pair in &pixel_pairs {
             let old_pos = pair[0];
             let new_pos = pair[1];
 
-            println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
+            //println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
 
             let mut pix = self.grid[old_pos[1] as usize][old_pos[0] as usize];
             pix.pos = [new_pos[0] as u32, new_pos[1] as u32];
 
-            if new_grid[new_pos[1] as usize][new_pos[0] as usize].ptype == 0 {
-                new_grid[new_pos[1] as usize][new_pos[0] as usize] = pix;
-                new_grid[old_pos[1] as usize][old_pos[0] as usize] = self.grid[new_pos[1] as usize][new_pos[0] as usize];
-            } else {
-                let mut pix2 = new_grid[new_pos[1] as usize][new_pos[0] as usize];
-                pix2.pos = [old_pos[0] as u32, old_pos[1] as u32];
+            let mut swap = self.grid[new_pos[1] as usize][new_pos[0] as usize];
+            swap.pos = [old_pos[0] as u32, old_pos[1] as u32];
 
-                new_grid[new_pos[1] as usize][new_pos[0] as usize] = pix;
-                new_grid[old_pos[1] as usize][old_pos[0] as usize] = pix2;
-            }
+            new_grid[old_pos[1] as usize][old_pos[0] as usize] = swap;
+            new_grid[new_pos[1] as usize][new_pos[0] as usize] = pix;
         }
 
-        self.empty_check(new_grid);       
+        //self.empty_check(new_grid);       
 
         self.grid = new_grid;
     }
@@ -147,6 +141,7 @@ impl Simulation {
             }
         }
     }
+
     pub fn print(&self, _verbose: bool) {
         let mut stdout = stdout();
         stdout.queue(cursor::SavePosition).unwrap();

@@ -11,6 +11,14 @@ mod draw;
 use draw::*;
 
 mod elements;
+use std::io::{stdin, stdout, Read, Write};
+
+fn pause() {
+    let mut stdout = stdout();
+    stdout.write(b"Press Enter to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin().read(&mut [0]).unwrap();
+}
 
 fn main() {
     let mut sim = Simulation::new();
@@ -151,6 +159,8 @@ fn main() {
             sim.update(verbose);
             //wln!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
             //sim.print(verbose);
+
+          //  pause();
         }
     }
 }
