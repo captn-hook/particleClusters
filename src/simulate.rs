@@ -12,8 +12,8 @@ use crate::draw::*;
 use crate::elements::*;
 
 pub struct Simulation {
-    pub SIZE: [u32; 2],
-    pub SCALE: u32,
+    pub size: [u32; 2],
+    pub scale: u32,
     pub window: PistonWindow,
     pub grid: [[Pixel; 5]; 5],
     pub gravity: f64,
@@ -28,10 +28,10 @@ impl Simulation {
 
         let elements = ElementList::new();
 
-        const SCALE: u32 = 120;
-        const SIZE: [u32; 2] = [5; 2];
+        const scale: u32 = 120;
+        const size: [u32; 2] = [5; 2];
         
-        let mut gravity: f64 = 0.1;
+        let mut gravity: f64 = 1.0;
         let mut friction: f64 = 0.99;        
         let mut mouse_pos = [0, 0];
         let mut edge_mode: bool = false;
@@ -39,21 +39,23 @@ impl Simulation {
         let mut grid = [[Pixel::default(); 5]; 5];
         
         //SET pos in pixels to index in grid
-        for y in 0..SIZE[1] {
-            for x in 0..SIZE[0] {
+        for y in 0..size[1] {
+            for x in 0..size[0] {
                 grid[y as usize][x as usize] = Pixel::spawn("air".to_string(), [x, y]);
 
             }
         }
+        
+        //temp check to make sure air is set
 
-        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [SIZE[0] * SCALE, SIZE[1] * SCALE])
+        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * scale, size[1] * scale])
             .exit_on_esc(true)
             .build()
             .unwrap();
 
         Simulation {
-            SIZE,
-            SCALE,
+            size,
+            scale,
             window,
             grid,
             gravity,
@@ -65,12 +67,16 @@ impl Simulation {
     }
 
     pub fn update(&mut self, verbose: bool) {
-        let mut new_grid = [[Pixel::default(); 5]; 5];
+
+        println!("UPDATE"); 
+        self.empty_check(self.grid);
+
+        let mut new_grid = self.grid.clone();
         //get list of pixels ordered by and velocity
         let mut pixel_list = Vec::new();
 
-        for y in 0..self.SIZE[1] {
-            for x in 0..self.SIZE[0] {
+        for y in 0..self.size[1] {
+            for x in 0..self.size[0] {
                 let mut pix = self.grid[y as usize][x as usize];
                 pix.unblock();
                 pix.pos = [x, y];
@@ -79,30 +85,37 @@ impl Simulation {
 
                 pix.vel[1] += pix.gravity_multiplier * self.gravity;
 
+                println!("PIXEL VEL: {:?}", pix.vel);
+
                 pixel_list.push(pix);
             }
         }
 
+        pixel_list.sort_by(|a, b| ((a.vel[0] + a.vel[1]) * a.density).partial_cmp(&((b.vel[0] + b.vel[1]) * b.density)).unwrap());
+
         let mut pixel_pairs = Vec::new();
 
         for pix in &pixel_list {
-            let mut new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
-            new_pos = wrapped_coord(new_pos, self.edge_mode, self.SIZE);
+            let pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
+            let new_pos = wrapped_coord(pos, self.edge_mode, self.size);
             //if no movement, skip
-            if new_pos == [pix.pos[0] as i32, pix.pos[1] as i32] {
+            if new_pos == pix.pos {
+                //println!("NO MOVE: {:?}", pix.pos);
                 continue;
+            } else {
+                println!("MOVE: {:?} {:?}", pix.pos, new_pos);
             }
             //add move to list
             pixel_pairs.push([pix.pos, [new_pos[0] as u32, new_pos[1] as u32]]);
         }
         
-        pixel_list.sort_by(|a, b| ((a.vel[0] + a.vel[1]) * a.density).partial_cmp(&((b.vel[0] + b.vel[1]) * b.density)).unwrap());
-
         //for every move, swap pixels
         //if new_grid pos is empty, grab from old grid
         for pair in &pixel_pairs {
             let old_pos = pair[0];
             let new_pos = pair[1];
+
+            println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
 
             let mut pix = self.grid[old_pos[1] as usize][old_pos[0] as usize];
             pix.pos = [new_pos[0] as u32, new_pos[1] as u32];
@@ -119,15 +132,27 @@ impl Simulation {
             }
         }
 
+        self.empty_check(new_grid);       
+
         self.grid = new_grid;
     }
 
+    pub fn empty_check(&self, grid: [[Pixel; 5]; 5]) {
+        //temp check, make sure no type 0 pixels
+        for y in 0..self.size[1] {
+            for x in 0..self.size[0] {
+                if grid[y as usize][x as usize].ptype == 0 {
+                    println!("ERROR: TYPE 0 PIXEL AT {:?} {:?}", x, y);
+                }
+            }
+        }
+    }
     pub fn print(&self, _verbose: bool) {
         let mut stdout = stdout();
         stdout.queue(cursor::SavePosition).unwrap();
-        for y in 0..self.SIZE[1] {
+        for y in 0..self.size[1] {
             print!("{:04}|", y);
-            for x in 0..self.SIZE[0] {
+            for x in 0..self.size[0] {
                 print!("{}", self.grid[y as usize][x as usize].print());
             }
             println!();
@@ -158,8 +183,8 @@ impl Simulation {
     pub fn sea(&mut self, typ: String) {
         let x = self.mouse_pos[0];
         let y = self.mouse_pos[1];
-        for x in 0..self.SIZE[0] {
-            for y in y..self.SIZE[1] {
+        for x in 0..self.size[0] {
+            for y in y..self.size[1] {
                 if self.grid[y as usize][x as usize].density <= 0.3 {
                     self.grid[y as usize][x as usize] = Pixel::spawn(typ.clone(), [x, y]);
                 }
@@ -169,7 +194,7 @@ impl Simulation {
 
     //pixel radius iterator
     pub fn radius_iter(&mut self, r: u32) -> Vec<[u32; 2]> {
-        radius(self.mouse_pos, r, self.SIZE)
+        radius(self.mouse_pos, r, self.size)
     }
 
     //place pixel (air) at mouse position r=radius
@@ -190,23 +215,23 @@ impl Simulation {
     //[#] = brick
 }
 
-pub fn radius(pos: [u32; 2], r: u32, SIZE: [u32; 2]) -> Vec<[u32; 2]> {
+pub fn radius(pos: [u32; 2], r: u32, size: [u32; 2]) -> Vec<[u32; 2]> {
     let x = pos[0];
     let y = pos[1];
     let mut vec = Vec::new();
     for i in 0..r {
         for j in 0..r {
             if i*i + j*j <= r*r {
-                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < SIZE[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < SIZE[1] as i32 {
+                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < size[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < size[1] as i32 {
                     vec.push([x + i, y + j]);
                 } 
-                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < SIZE[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < SIZE[1] as i32 {
+                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < size[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < size[1] as i32 {
                     vec.push([x - i, y + j]);
                 }
-                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < SIZE[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < SIZE[1] as i32 {
+                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < size[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < size[1] as i32 {
                     vec.push([x + i, y - j]);
                 }
-                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < SIZE[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < SIZE[1] as i32 {
+                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < size[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < size[1] as i32 {
                     vec.push([x - i, y - j]);
                 }
             }
@@ -215,9 +240,9 @@ pub fn radius(pos: [u32; 2], r: u32, SIZE: [u32; 2]) -> Vec<[u32; 2]> {
     vec
 }
 
-pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, SIZE: [u32; 2]) -> [u32; 2] {
-    let mut bx = SIZE[0] as i32 - 1;
-    let mut by = SIZE[1] as i32 - 1;
+pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2] {
+    let bx = size[0] as i32 - 1;
+    let by = size[1] as i32 - 1;
     let mut x = pos[0];
     let mut y = pos[1];
     if edge_mode {

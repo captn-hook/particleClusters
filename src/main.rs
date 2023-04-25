@@ -51,16 +51,16 @@ fn main() {
                 case = 4;
             }
 
-            new_frame(&mut sim.window, &event, &sim.grid, sim.SCALE, case, pos, sim.SIZE);
+            new_frame(&mut sim.window, &event, &sim.grid, sim.scale, case, pos, sim.size);
         }
 
         //track mouse position
         if let Some(pos) = event.mouse_cursor_args() {
             //integer and scaled mouse position
-            let x = pos[0] as u32 / sim.SCALE;
-            let y = pos[1] as u32 / sim.SCALE;
+            let x = pos[0] as u32 / sim.scale;
+            let y = pos[1] as u32 / sim.scale;
             //limit mouse position to grid
-            if 0 <= x && x < sim.SIZE[0] && 0 <= y && y < sim.SIZE[1] {
+            if 0 <= x && x < sim.size[0] && 0 <= y && y < sim.size[1] {
                 sim.mouse_pos = [x, y];
                 //println!("MOUSE {} {}", x, y);
             }
@@ -145,11 +145,11 @@ fn main() {
         if let Some(args) = event.update_args() {
             let verbose = false;
             if verbose {
-                println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.SCALE, sim.SIZE[0], sim.SIZE[1]);
+                println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
                 sim.print(verbose);
             }
             sim.update(verbose);
-            //wln!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++SCALE: {}, SIZE: {}x{}", sim.scale, sim.size[0], sim.size[1]);
+            //wln!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
             //sim.print(verbose);
         }
     }
