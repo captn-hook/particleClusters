@@ -184,7 +184,7 @@ impl Pixel {
     }
 }
 
-pub fn pixel_draw(pixels: [[Pixel; 10]; 10], context: Context, graphics: &mut G2d, scale: u32) {
+pub fn pixel_draw(pixels: [[Pixel; 5]; 5], context: Context, graphics: &mut G2d, scale: u32) {
     for (_y, row) in pixels.iter().enumerate() {
         for (_x, pixel) in row.iter().enumerate() {
             

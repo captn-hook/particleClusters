@@ -90,7 +90,7 @@ pub fn draw_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) {
 
 }
 
-pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &[[Pixel; 10]; 10], scale: u32, case: u32, pos: [u32; 4], size: [u32; 2]) {
+pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &[[Pixel; 5]; 5], scale: u32, case: u32, pos: [u32; 4], size: [u32; 2]) {
     window.draw_2d(event, |context, graphics, _| {
         clear([1.0; 4], graphics);
         //pixel.pixel_draw

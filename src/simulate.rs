@@ -15,7 +15,7 @@ pub struct Simulation {
     pub size: [u32; 2],
     pub scale: u32,
     pub window: PistonWindow,
-    pub grid: [[Pixel; 10]; 10],
+    pub grid: [[Pixel; 5]; 5],
     pub gravity: f64,
     pub friction: f64,
     pub mouse_pos: [u32; 2],
@@ -28,15 +28,15 @@ impl Simulation {
 
         let mut elements = ElementList::new();
 
-        const scale: u32 = 100;
-        const size: [u32; 2] = [10; 2];
+        const scale: u32 = 120;
+        const size: [u32; 2] = [5; 2];
         
         let mut gravity: f64 = 0.1;
         let mut friction: f64 = 0.99;        
         let mut mouse_pos = [0, 0];
-        let mut edge_mode: bool = true;
+        let mut edge_mode: bool = false;
         
-        let mut grid = [[Pixel::default(); 10]; 10];
+        let mut grid = [[Pixel::default(); 5]; 5];
         
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
@@ -65,29 +65,31 @@ impl Simulation {
     }
 
     pub fn update(&mut self, verbose: bool) {
-        let mut new_grid = [[Pixel::default(); 10]; 10];
-        //get list of pixels ordered by density
+        let mut new_grid = [[Pixel::default(); 5]; 5];
+        //get list of pixels ordered by and velocity
         let mut pixel_list = Vec::new();
 
         for y in 0..self.size[1] {
             for x in 0..self.size[0] {
+                self.grid[y as usize][x as usize].unblock();
+                self.grid[y as usize][x as usize].pos = [x, y];
+
                 pixel_list.push(self.grid[y as usize][x as usize]);
             }
         }
 
-        pixel_list.sort_by(|a, b| b.density.partial_cmp(&a.density).unwrap());
-
+        pixel_list.sort_by(|a, b| ((a.vel[0] + a.vel[1]) * a.density).partial_cmp(&((b.vel[0] + b.vel[1]) * b.density)).unwrap());
         //update each pixel and its swappee into new grid, set blocked, update pos
-        for mut pix in pixel_list {
+        for mut pix in &mut pixel_list {
             if pix.is_blocked() {
                 continue;
             }
-            let new_pos = pix.phys_step(self.friction, self.gravity, self.edge_mode);
+            let mut new_pos = pix.phys_step(self.friction, self.gravity, self.edge_mode);
             let mut pos = pix.pos;
             if pos == new_pos {
                 //no swap
                 pix.block();
-                new_grid[pos[1] as usize][pos[0] as usize] = pix;
+                new_grid[pos[1] as usize][pos[0] as usize] = *pix;
             } else {
                 //get one pixel in new pos dir from old pos
                 if new_pos[0] > pos[0] {
@@ -101,17 +103,28 @@ impl Simulation {
                     pos[1] -= 1;
                 }
 
-                pos = wrapped_coord(pos, self.edge_mode, self.size);
+                new_pos = wrapped_coord(new_pos, self.edge_mode, self.size);
+                pos = wrapped_coord(pos, self.edge_mode, self.size);              
 
                 //get swappee
 
-                let mut swappee = self.grid[pos[1] as usize][pos[0] as usize];
+                let mut swappee = self.grid[new_pos[1] as usize][new_pos[0] as usize];
                 
                 swappee.block();
                 pix.block();
 
-                new_grid[new_pos[1] as usize][new_pos[0] as usize] = swappee;
-                new_grid[pos[1] as usize][pos[0] as usize] = pix;
+                println!("PIX: X {}, Y {}, DENSITY {}", pix.pos[0], pix.pos[1], pix.density);
+                println!("SWAPPEE: X {}, Y {}, DENSITY {}", swappee.pos[0], swappee.pos[1], swappee.density);
+
+                swappee.pos = pix.pos;
+                println!("swappee pos: {:?}", swappee.pos);
+                pix.pos = new_pos;
+
+                new_grid[pix.pos[0] as usize][pix.pos[1] as usize] = *pix;
+                new_grid[swappee.pos[0] as usize][swappee.pos[1] as usize] = swappee;
+
+                println!("PIX2: X {}, Y {}, DENSITY {}", new_grid[new_pos[1] as usize][new_pos[0] as usize].pos[0], new_grid[new_pos[1] as usize][new_pos[0] as usize].pos[1], new_grid[new_pos[1] as usize][new_pos[0] as usize].density);
+                println!("SWAPPEE2: X {}, Y {}, DENSITY {}", new_grid[pos[1] as usize][pos[0] as usize].pos[0], new_grid[pos[1] as usize][pos[0] as usize].pos[1], new_grid[pos[1] as usize][pos[0] as usize].density);
             }
         }
         self.grid = new_grid;
@@ -131,18 +144,6 @@ impl Simulation {
         stdout.queue(terminal::Clear(terminal::ClearType::CurrentLine)).unwrap();
     }
                 
-
-    pub fn swap_pixels(&mut self, pos1: [u32; 2], pos2: [u32; 2]) {
-        let pixel1 = self.grid[pos1[1] as usize][pos1[0] as usize];
-        let pixel2 = self.grid[pos2[1] as usize][pos2[0] as usize]; 
-        self.grid[pos1[1] as usize][pos1[0] as usize] = pixel2;
-        self.grid[pos2[1] as usize][pos2[0] as usize] = pixel1;
-    }
-
-    pub fn peek(&mut self, pos: [u32; 2]) -> Pixel {
-        self.grid[pos[1] as usize][pos[0] as usize]
-    }
-
     //place pixel (sand) at mouse position
     pub fn place_pixel(&mut self, typ: String) {
         let x = self.mouse_pos[0];
