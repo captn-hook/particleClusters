@@ -17,37 +17,6 @@ pub struct Pixel {
     pub friction_multiplier: f64,
 }
 
-#[derive(Clone)]
-pub struct PType {
-    //each ptype lives in pixel/ptype.rs
-    pub name: String,
-    pub interact: Vec<String>,
-}
-
-impl PType {
-    pub fn _new(name: String) -> PType {
-        
-        let interacts: Vec<String> = vec![];
-        PType {
-            name,
-            interact: interacts,
-        }
-    } 
-    
-    pub fn _add_interact(&mut self, interact: String) {
-        self.interact.push(interact);
-    }
-
-    pub fn _fetch_interact(&self, interact: String) -> bool {
-        for i in &self.interact {
-            if i == &interact {
-                return  true;
-            }
-        }
-        false
-    }
-}
-
 impl Pixel {
     pub fn new(ptype: u8, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64) -> Pixel {
         Pixel {
@@ -77,6 +46,10 @@ impl Pixel {
             brick(pos)
         } else if typ == "wood" {
             wood(pos)
+        } else if typ == "smoke" {
+            smoke(pos)
+        } else if typ == "glass" {
+            glass(pos)
         } else {
             Pixel::default()
         }

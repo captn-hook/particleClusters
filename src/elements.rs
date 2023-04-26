@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::pixel::*;
 use crate::draw::*;
 
@@ -5,6 +7,8 @@ use crate::draw::*;
 pub struct ElementList {
     pub elements: Vec<String>,
     pub element_codes: Vec<u8>,
+    //              input, (catalyst, output)
+    pub interactivity: HashMap<u8, (u8, u8)>,
     
     _lenght: usize,
 }
@@ -12,16 +16,16 @@ pub struct ElementList {
 impl ElementList {
     pub fn new() -> ElementList {
         let elements = vec![
-            "default".to_string(),
-            "air".to_string(),
-            "sand".to_string(),
-            "water".to_string(),
-            "lava".to_string(),
-            "stone".to_string(),
-            "brick".to_string(),
-            "wood".to_string(),
-            "smoke".to_string(),
-            "glass".to_string(),
+            "default".to_string(), //0
+            "air".to_string(),     //1
+            "sand".to_string(),    //2
+            "water".to_string(),   //3
+            "lava".to_string(),    //4
+            "stone".to_string(),   //5
+            "brick".to_string(),   //6 
+            "wood".to_string(),    //7
+            "smoke".to_string(),   //8
+            "glass".to_string(),   //9
         ];
         let element_codes = vec![
             0,
@@ -36,9 +40,30 @@ impl ElementList {
             9,
         ];
         let _lenght = elements.len();
+
+        let interactivity_list: [(u8, u8, u8); 5] = [
+            //water to air with lava
+            (3, 4, 1),
+            //lava to stone with water
+            (4, 3, 5),
+            //lava to smoke with sand
+            (4, 2, 8),
+            //sand to glass with lava
+            (2, 4, 9),
+            //wood to smoke with lava
+            (7, 4, 8),
+        ];
+
+        let mut interactivity = HashMap::new();
+
+        for i in 0..interactivity_list.len() {
+            interactivity.insert(interactivity_list[i].0, (interactivity_list[i].1, interactivity_list[i].2));
+        }
+
         ElementList {
             elements,
             element_codes,
+            interactivity,
             _lenght,
         }
     }
@@ -52,7 +77,7 @@ impl ElementList {
         return 0;
     }
 
-    pub fn _get_name(&self, index: u8) -> String {
+    pub fn get_name(&self, index: u8) -> String {
         for i in 0..self._lenght {
             if self.element_codes[i] == index {
                 return self.elements[i].clone();
@@ -84,16 +109,16 @@ impl ElementList {
 }
 
 pub fn glass(pos: [u32; 2]) -> Pixel {
-    let r = rand_color(0.5, 0.1);
-    let g = rand_color(0.5, 0.1);
-    let b = rand_color(0.6, 0.2);
+    let r = rand_color(0.5, 0.03);
+    let g = rand_color(0.5, 0.03);
+    let b = rand_color(0.65, 0.1);
 
     Pixel::new(9,
         pos,
         [0.0; 2],
         [r, g, b, 1.0],
-        0.4,
-        0.45,
+        0.8,
+        1.1,
         1.2,
         0.99,
     )
@@ -106,10 +131,10 @@ pub fn smoke(pos: [u32; 2]) -> Pixel {
         pos,
         [0.0; 2],
         cl,
-        0.4,
+        0.01,
         0.45,
-        1.2,
-        0.99,
+        -1.5,
+        0.95,
     )
 }
 
@@ -135,7 +160,7 @@ pub fn air(pos: [u32; 2]) -> Pixel {
         pos,
         [0.0; 2],
         cl,
-        0.01,
+        0.03,
         0.0,
         0.01,
         0.95,
@@ -214,3 +239,36 @@ pub fn brick(pos: [u32; 2]) -> Pixel {
         0.99,
     )
 }
+
+//fuck ion kno
+
+// #[derive(Clone)]
+// pub struct PType {
+//     //each ptype lives in pixel/ptype.rs
+//     pub name: String,
+//     pub interact: Vec<String>,
+// }
+
+// impl PType {
+//     pub fn _new(name: String) -> PType {
+        
+//         let interacts: Vec<String> = vec![];
+//         PType {
+//             name,
+//             interact: interacts,
+//         }
+//     } 
+    
+//     pub fn _add_interact(&mut self, interact: String) {
+//         self.interact.push(interact);
+//     }
+
+//     pub fn _fetch_interact(&self, interact: String) -> bool {
+//         for i in &self.interact {
+//             if i == &interact {
+//                 return  true;
+//             }
+//         }
+//         false
+//     }
+// }

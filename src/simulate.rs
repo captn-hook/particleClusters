@@ -32,7 +32,7 @@ impl Simulation {
         let gravity: f64 = 1.0;
         let friction: f64 = 0.99;        
         let mouse_pos = [0, 0];
-        let edge_mode: bool = true;
+        let edge_mode: bool = false;
         
         let mut grid: Vec<Vec<Pixel>> = vec![];
         
@@ -68,7 +68,7 @@ impl Simulation {
     pub fn update(&mut self, _verbose: bool) {
 
         //println!("UPDATE"); 
-        self.empty_check(self.grid.clone());
+        //self.empty_check(self.grid.clone());
         //pause();
 
         let mut new_grid = self.grid.clone();
@@ -147,13 +147,59 @@ impl Simulation {
             new_grid[new_pos[1] as usize][new_pos[0] as usize] = pix;
         }
 
-        self.empty_check(new_grid.clone());   
+        //check for interactions
+        for y in 0..self.size[1] {
+            for x in 0..self.size[0] {
+                let pos = [x, y];
+                let interact = self.check_interacts(pos, new_grid.clone());
+                if interact.0 != "none" {
+                    let t1 = interact.0;
+                    let t2 = interact.1;
+                    let pos2 = interact.2;
+
+                    new_grid[pos[1] as usize][pos[0] as usize] = Pixel::spawn(t1, pos);
+                    if t2 != "none" {
+                        new_grid[pos2[1] as usize][pos2[0] as usize] = Pixel::spawn(t2, pos)
+                    }
+                }
+            }
+        }
+
+        //self.empty_check(new_grid.clone());   
 
         self.grid = new_grid;
 
     }
 
-    pub fn empty_check(&self, grid: Vec<Vec<Pixel>>) {
+    pub fn check_interacts(&self, pos: [u32; 2], grid: Vec<Vec<Pixel>>) -> (String, String, [u32; 2]) {
+        //check if pixel has an interaction, if none return "none", else return replacemnt type
+        //input, (catalyst, output)
+        let elem = grid[pos[1] as usize][pos[0] as usize].ptype;
+
+        if self.elements.interactivity.contains_key(&elem) {
+            let adj = adjacents(pos, self.edge_mode, self.size);
+            let interactions = self.elements.interactivity.get(&elem).unwrap();
+
+            for a in adj {
+                let adj_elem = grid[a[1] as usize][a[0] as usize].ptype;
+                if interactions.0 == adj_elem {
+                    //interaction found, does the catalyst reciprocate?
+                    let t1 = self.elements.get_name(interactions.1);
+                    if self.elements.interactivity.contains_key(&adj_elem) && self.elements.interactivity.get(&adj_elem).unwrap().0 == elem {
+                        //catalyst reciprocates, return both
+                        let t2 = self.elements.get_name(self.elements.interactivity.get(&adj_elem).unwrap().1);
+                        return (t1, t2, a);
+                    } else {
+                        //catalyst does not reciprocate, return only catalyst
+                        return (t1, "none".to_string(), a);
+                    }
+                }
+            }
+        }
+        return ("none".to_string(), "none".to_string(), [0, 0]);
+    }
+
+    pub fn _empty_check(&self, grid: Vec<Vec<Pixel>>) {
         //temp check, make sure no type 0 pixels
         for y in 0..self.size[1] {
             for x in 0..self.size[0] {
@@ -290,7 +336,7 @@ pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2]
     [x as u32, y as u32]            
 }
 
-pub fn _adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
+pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
     let mut vec = Vec::new();
     
     for i in -1..2 {
