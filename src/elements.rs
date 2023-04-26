@@ -8,7 +8,7 @@ pub struct ElementList {
     pub elements: Vec<String>,
     pub element_codes: Vec<u8>,
     //              input, (catalyst, output)
-    pub interactivity: HashMap<u8, (u8, u8)>,
+    pub interactivity: HashMap<u8, Vec<(u8, u8)>>,
     
     _lenght: usize,
 }
@@ -54,10 +54,15 @@ impl ElementList {
             (7, 4, 8),
         ];
 
-        let mut interactivity = HashMap::new();
+        let mut interactivity: HashMap<u8, Vec<(u8, u8)>> = HashMap::new();
 
         for i in 0..interactivity_list.len() {
-            interactivity.insert(interactivity_list[i].0, (interactivity_list[i].1, interactivity_list[i].2));
+            let (input, catalyst, output) = interactivity_list[i];
+            if interactivity.contains_key(&input) {
+                interactivity.get_mut(&input).unwrap().push((catalyst, output));
+            } else {
+                interactivity.insert(input, vec![(catalyst, output)]);
+            }
         }
 
         ElementList {

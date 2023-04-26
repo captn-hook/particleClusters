@@ -182,16 +182,19 @@ impl Simulation {
 
             for a in adj {
                 let adj_elem = grid[a[1] as usize][a[0] as usize].ptype;
-                if interactions.0 == adj_elem {
-                    //interaction found, does the catalyst reciprocate?
-                    let t1 = self.elements.get_name(interactions.1);
-                    if self.elements.interactivity.contains_key(&adj_elem) && self.elements.interactivity.get(&adj_elem).unwrap().0 == elem {
-                        //catalyst reciprocates, return both
-                        let t2 = self.elements.get_name(self.elements.interactivity.get(&adj_elem).unwrap().1);
-                        return (t1, t2, a);
-                    } else {
-                        //catalyst does not reciprocate, return only catalyst
-                        return (t1, "none".to_string(), a);
+                for interact in interactions {
+                    if interact.0 == adj_elem {
+                        //interaction found, does the catalyst reciprocate?
+                        let t1 = self.elements.get_name(interact.1);
+
+                        if self.elements.interactivity.contains_key(&adj_elem) && interact.0 == elem {
+                            //catalyst reciprocates, return both
+                            let t2 = self.elements.get_name(interact.1);
+                            return (t1, t2, a);
+                        } else {
+                            //catalyst does not reciprocate, return only catalyst
+                            return (t1, "none".to_string(), a);
+                        }
                     }
                 }
             }
