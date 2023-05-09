@@ -1,5 +1,4 @@
 use piston_window::*;
-use colored::Colorize;
 
 use crate::draw::*;
 
@@ -69,62 +68,56 @@ impl Pixel {
         }
     }
 
-    pub fn print(&self) -> String {
-        let direct = false;
-        let symbols = " ░▒▓█EDCBAX";
-        //use density to determine symbol, and color from color
-        let mut printstr = format!("[{}]", symbols.chars().nth(self.density as usize).unwrap());
+    // pub fn print(&self) -> String {
+    //     let direct = false;
+    //     let symbols = " ░▒▓█EDCBAX";
+    //     //use density to determine symbol, and color from color
+    //     let mut printstr = format!("[{}]", symbols.chars().nth(self.density as usize).unwrap());
         
-        //get max from colored rgb
-        //red max
-        if self.color[0] > self.color[1] && self.color[0] > self.color[2] {
-            printstr = printstr.red().to_string();
-        //green max 
-        } else if self.color[1] > self.color[0] && self.color[1] > self.color[2] {
-            printstr = printstr.green().to_string();
-        //blue max
-        } else if self.color[2] > self.color[0] && self.color[2] > self.color[1] {
-            printstr = printstr.blue().to_string();
-        //all equal
-        } else {
-            printstr = printstr.white().to_string();
-        }
+    //     //get max from colored rgb
+    //     //red max
+    //     if self.color[0] > self.color[1] && self.color[0] > self.color[2] {
+    //         printstr = printstr.red().to_string();
+    //     //green max 
+    //     } else if self.color[1] > self.color[0] && self.color[1] > self.color[2] {
+    //         printstr = printstr.green().to_string();
+    //     //blue max
+    //     } else if self.color[2] > self.color[0] && self.color[2] > self.color[1] {
+    //         printstr = printstr.blue().to_string();
+    //     //all equal
+    //     } else {
+    //         printstr = printstr.white().to_string();
+    //     }
 
-        //get min from colored rgb
-        //red min
-        if self.color[0] < self.color[1] && self.color[0] < self.color[2] {
-            printstr = printstr.on_magenta().to_string();
-        //green min
-        } else if self.color[1] < self.color[0] && self.color[1] < self.color[2] {
-            printstr = printstr.on_purple().to_string();
-        //blue min
-        } else if self.color[2] < self.color[0] && self.color[2] < self.color[1] {
-            printstr = printstr.on_cyan().to_string();
-        //all equal
-        } else {
-            printstr = printstr.on_white().to_string();
-        }
+    //     //get min from colored rgb
+    //     //red min
+    //     if self.color[0] < self.color[1] && self.color[0] < self.color[2] {
+    //         printstr = printstr.on_magenta().to_string();
+    //     //green min
+    //     } else if self.color[1] < self.color[0] && self.color[1] < self.color[2] {
+    //         printstr = printstr.on_purple().to_string();
+    //     //blue min
+    //     } else if self.color[2] < self.color[0] && self.color[2] < self.color[1] {
+    //         printstr = printstr.on_cyan().to_string();
+    //     //all equal
+    //     } else {
+    //         printstr = printstr.on_white().to_string();
+    //     }
 
 
-        if direct {
-            print!("{}", printstr);
-        }
-        return printstr.to_string();
-    }
+    //     if direct {
+    //         print!("{}", printstr);
+    //     }
+    //     return printstr.to_string();
+    // }
 
-    pub fn draw(&self, context: Context, graphics: &mut G2d, scale: u32, ruler: bool) {
+    pub fn draw(&self, scale: u32) -> ([f64; 4], [f32; 4]) {
         
         let coords = screem(self.pos, scale);
         let tx = coords[0];
         let ty = coords[1];
-        
-        let square = rectangle::square(tx, ty, scale as f64);
-        rectangle(self.color, square, context.transform, graphics);
 
-        if ruler {
-            //draw outline
-            draw_cursor_outline(coords, context, graphics);
-        }
+        return (coords, self.color)
     }
 }
 
@@ -137,7 +130,17 @@ pub fn pixel_draw(pixels: &Vec<Vec<Pixel>>, context: Context, graphics: &mut G2d
             if pixel.density > 0.95 && (pixel.vel[0] == 0.0 && pixel.vel[1] == 0.0) {
                 ruler = true;
             }
-            pixel.draw(context, graphics, scale, ruler);
+
+            let (coords, color) = pixel.draw(scale);
+
+            let square = rectangle::square(coords[0], coords[1], scale as f64);
+
+            rectangle(color, square, context.transform, graphics);
+
+            if ruler {
+                //draw outline
+                draw_cursor_outline(coords, context, graphics);
+            }
         }
     }
 }

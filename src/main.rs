@@ -12,6 +12,7 @@ use draw::*;
 
 mod elements;
 use std::io::{stdin, stdout, Read, Write};
+use std::thread;
 
 fn _pause() {
     let mut stdout = stdout();
@@ -174,11 +175,28 @@ fn main() {
                 println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
                 sim.print(verbose);
             }
-            sim.update(verbose);
-            //wln!("POST UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
-            //sim.print(verbose);
+                
+            let subgrids = sim.update_grids(verbose);
+            //multithread the subdate fn
+            let mut handles = vec![];
+            for i in 0..sim.chunk_div * sim.chunk_div {
+                let subgrid = subgrids[i as usize].clone();
+                let handle = thread::spawn(move || {
+                    let (sg, eg) = subdate(subgrid, i, sim.size, sim.chunk_div, sim.gravity, sim.friction);
+                    (sg, eg)
+                });
+                handles.push(handle);
+            }
 
-          //  pause();
+            let mut subgrids2 = vec![];
+            let mut edge_cases2 = vec![];
+            for handle in handles {
+                let (subgrid, edge_cases) = handle.join().unwrap();
+                subgrids2.push(subgrid);
+                edge_cases2.push(edge_cases);
+            }
+
+            sim.update_whole(subgrids2, edge_cases2)
         }
     }
 }
