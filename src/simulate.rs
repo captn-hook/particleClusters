@@ -28,10 +28,9 @@ impl Simulation {
 
         const SCALE: u32 = 10;
         const CHUNK_DIV: u32 = 4;
-        const SIM_SIZE: u32 = 25;
-        const SIZE: [u32; 2] = [SIM_SIZE * CHUNK_DIV, SIM_SIZE * CHUNK_DIV];
-        
-        
+        const SIM_size: u32 = 25;
+        let size: [u32; 2] = [SIM_size * (CHUNK_DIV as f64).sqrt() as u32, SIM_size * (CHUNK_DIV as f64).sqrt() as u32];
+
         let gravity: f64 = 1.0;
         let friction: f64 = 0.99;        
         let mouse_pos = [0, 0];
@@ -40,9 +39,9 @@ impl Simulation {
         let mut grid: Vec<Vec<Pixel>> = vec![];
         
         //SET pos in pixels to index in grid
-        for y in 0..SIZE[1] {
+        for y in 0..size[1] {
             let mut row: Vec<Pixel> = vec![];
-            for x in 0..SIZE[0] {
+            for x in 0..size[0] {
                 row.push(Pixel::spawn("air".to_string(), [x, y]));
             }
             grid.push(row);
@@ -50,13 +49,13 @@ impl Simulation {
         
         //temp check to make sure air is set
 
-        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [SIZE[0] * SCALE, SIZE[1] * SCALE])
+        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * SCALE, size[1] * SCALE])
             .exit_on_esc(true)
             .build()
             .unwrap();
 
         Simulation {
-            size: SIZE,
+            size: size,
             scale: SCALE,
             window,
             grid,
@@ -72,27 +71,27 @@ impl Simulation {
     
     pub fn update_grids(&mut self, _verbose: bool) -> Vec<Vec<Vec<Pixel>>> {
 
-
-        let mut new_grid = self.grid.clone();
-
         let mut subgrids: Vec<Vec<Vec<Pixel>>> = vec![];
 
         //split grid into subgrids
-        for i in 0..self.chunk_div {
-            for id in 0..self.chunk_div {
+        for x in 0..(self.chunk_div as f64).sqrt() as u32 {
+            for y in 0..(self.chunk_div as f64).sqrt() as u32 {
+                println!("STEP {} {}", x, y);
+                //trim self.grid.clone to self.size / chunk_div + offset
                 let mut subgrid: Vec<Vec<Pixel>> = vec![];
-                for y in 0..self.size[1] / self.chunk_div {
+                for y2 in 0..self.size[1] / (self.chunk_div as f64).sqrt() as u32  {
                     let mut row: Vec<Pixel> = vec![];
-                    for x in 0..self.size[0] / self.chunk_div {
-                        row.push(self.grid[y as usize][x as usize]);
+                    for x2 in 0..self.size[0] / (self.chunk_div as f64).sqrt() as u32 {
+                        row.push(self.grid[(y * self.size[1] / self.chunk_div + y2) as usize][(x * self.size[0] / self.chunk_div + x2) as usize].clone());
                     }
                     subgrid.push(row);
                 }
+
+                print!("SG CHECK {} {}", subgrid.len(), subgrid[0].len());
+
                 subgrids.push(subgrid);
             }
         }
-        //let i = 0;
-        //subdate(subgrids[i as usize].clone(), i, self.size, self.chunk_div, self.gravity, self.friction);
 
         subgrids
     }
@@ -113,7 +112,11 @@ impl Simulation {
         let mut new_grid = self.grid.clone();
         //update pixels in order
         for pix in pixel_list {
+            let new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
+            let pos = wrapped_coord(new_pos, self.edge_mode, self.size);
 
+            println!("WHOLDE DATE {}{}", pix.pos[0], pix.pos[1]);
+            new_grid = swap_pix(pix.pos, pos, &mut new_grid, &self.grid)
         }
         //check for interactions
         for y in 0..self.size[1] {
@@ -284,6 +287,7 @@ pub fn check_coord(pos: [i32; 2], size: [u32; 2]) -> bool {
 pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2] {
     let bx = size[0] as i32 - 1;
     let by = size[1] as i32 - 1;
+    print!("SHTUFF {}/{}", bx, by);
     let mut x = pos[0];
     let mut y = pos[1];
     if edge_mode {
@@ -332,7 +336,7 @@ pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]
     vec
 }
 
-pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, gravity: f64, friction: f64) -> (Vec<Vec<Pixel>>, Vec<Pixel>) {
+pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, gravity: f64, friction: f64, edge_mode: bool) -> (Vec<Vec<Pixel>>, Vec<Pixel>) {
     //mutates the subgrid and returns the edge cases
     let mut edge_cases: Vec<Pixel> = vec![];
     //get list of pixels ordered by and velocity
@@ -340,10 +344,11 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
 
     let mut subgrid = sgrid.clone();
     let ogrid = subgrid.clone();
-
+    println!("SUBDATE1 LEN{} LEN{}", subgrid.len(), subgrid.len());
     for y in 0..subgrid.len() {
         for x in 0..subgrid[y].len() {
             let mut pix = subgrid[y][x].clone();
+            //master size
             let x = x + id as usize * size[0] as usize / chunk_div as usize;
             let y = y + id as usize * size[1] as usize / chunk_div as usize;
 
@@ -386,25 +391,41 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
     let mut pixel_pairs = Vec::new();
 
     for pix in &pixel_list {
-        let new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
+
+        let x = pix.pos[0] as i32 - id as i32 * size[0] as i32 / chunk_div as i32;
+        let y = pix.pos[1] as i32 - id as i32 * size[1] as i32 / chunk_div as i32;
+        let pos = [x, y];
+        let new_pos = [pos[0] as i32 + pix.vel[0] as i32, pos[1] as i32 + pix.vel[1] as i32];
+      
         //if no movement, skip
-       
-       if pix.ptype == 0 || new_pos == [pix.pos[0] as i32, pix.pos[1] as i32] || ogrid[new_pos[1] as usize][new_pos[0] as usize].ptype == pix.ptype || pix.density < ogrid[new_pos[1] as usize][new_pos[0] as usize].density {
+        let sx = size[0] / chunk_div;
+        let sy = size[1] / chunk_div;
+        let size2 = [sx, sy];
+
+        println!("\nSUBDATE: {}/{} -> {}/{} | ({}/{}) {}\n", pos[0], pos[1], new_pos[0], new_pos[1], pix.pos[0], pix.pos[1], check_coord(pos, size2));
+        
+        if check_coord(new_pos, size2) == false || check_coord(pos, size2) {
+            edge_cases.push(pix.clone());
+            continue;
+        //else if pix is none || pix doesnt move || dest is same type || dest is greater density
+        }
+        let dest = ogrid[pos[0] as usize][pos[1] as usize];
+        if pix.ptype == 0 || new_pos == [pos[0] as i32, pos[1] as i32] {
+                continue;
+        } else if dest.ptype == pix.ptype || pix.density < dest.density {
             //println!("NO MOVE: {:?}", pix.pos);
             continue;
-        } else if check_coord(new_pos, size) == false {
-            edge_cases.push(pix.clone());
         } else {
             //println!("MOVE: {:?} {:?}", pix.pos, new_pos);           
         }
-        //add move to list
-        pixel_pairs.push([pix.pos, [new_pos[0] as u32, new_pos[1] as u32]]);
+        pixel_pairs.push([pos, new_pos]);
         
     }
     
     //for every move, swap pixels
     for pair in &pixel_pairs {
-        subgrid = swap_pix(pair[0], pair[1], &mut subgrid, &ogrid);
+        println!("SSG {}/{} {}/{}", pair[0][0], pair[0][1], pair[1][0], pair[1][1]);
+        subgrid = swap_pix([pair[0][0] as u32, pair[0][1] as u32], [pair[1][0] as u32, pair[1][1] as u32], &mut subgrid, &ogrid);
     }
 
     return (subgrid, edge_cases);
@@ -413,11 +434,11 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
 
 pub fn swap_pix(old_pos: [u32; 2], new_pos: [u32; 2], grid: &mut Vec<Vec<Pixel>>, ogrid: &Vec<Vec<Pixel>>) -> Vec<Vec<Pixel>> {
 
-    //println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
+    println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
 
     let mut pix = ogrid[old_pos[1] as usize][old_pos[0] as usize].clone();
     pix.pos = [new_pos[0] as u32, new_pos[1] as u32];
-
+    println!("SWWWWWWWWWWP {}/{} {}/{}", old_pos[0], old_pos[1], new_pos[0], new_pos[1]);
     let mut swap = ogrid[new_pos[1] as usize][new_pos[0] as usize];
     swap.pos = [old_pos[0] as u32, old_pos[1] as u32];
 

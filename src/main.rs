@@ -179,10 +179,10 @@ fn main() {
             let subgrids = sim.update_grids(verbose);
             //multithread the subdate fn
             let mut handles = vec![];
-            for i in 0..sim.chunk_div * sim.chunk_div {
+            for i in 0..sim.chunk_div {
                 let subgrid = subgrids[i as usize].clone();
                 let handle = thread::spawn(move || {
-                    let (sg, eg) = subdate(subgrid, i, sim.size, sim.chunk_div, sim.gravity, sim.friction);
+                    let (sg, eg) = subdate(subgrid, i, sim.size, sim.chunk_div, sim.gravity, sim.friction, sim.edge_mode);
                     (sg, eg)
                 });
                 handles.push(handle);
