@@ -28,8 +28,8 @@ impl Simulation {
 
         const SCALE: u32 = 10;
         const CHUNK_DIV: u32 = 4;
-        const SIM_size: u32 = 25;
-        let size: [u32; 2] = [SIM_size * (CHUNK_DIV as f64).sqrt() as u32, SIM_size * (CHUNK_DIV as f64).sqrt() as u32];
+        const SIM_SIZE: u32 = 10;
+        let size: [u32; 2] = [SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32, SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32];
 
         let gravity: f64 = 1.0;
         let friction: f64 = 0.99;        
@@ -336,7 +336,7 @@ pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]
     vec
 }
 
-pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, gravity: f64, friction: f64, edge_mode: bool) -> (Vec<Vec<Pixel>>, Vec<Pixel>) {
+pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, gravity: f64, friction: f64, edge_mode: bool) -> (Vec<Vec<Pixel>>, Vec<Pixel>, u32) {
     //mutates the subgrid and returns the edge cases
     let mut edge_cases: Vec<Pixel> = vec![];
     //get list of pixels ordered by and velocity
@@ -428,7 +428,7 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
         subgrid = swap_pix([pair[0][0] as u32, pair[0][1] as u32], [pair[1][0] as u32, pair[1][1] as u32], &mut subgrid, &ogrid);
     }
 
-    return (subgrid, edge_cases);
+    return (subgrid, edge_cases, id);
 }
 
 
