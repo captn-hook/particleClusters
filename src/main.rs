@@ -198,40 +198,7 @@ fn main() {
                 edge_cases2.push(edge_cases);
             }
 
-            println!("DONE SUBDATE, {} ===========================s", subgrids2.len());
-            
-            for i in 0..sim.chunk_div {
-                let id = idorder[i as usize];
-                let sg = subgrids2[i as usize].clone();
-                println!("ID: {}", id);
-                for x in 0..10 {
-                    for y in 0..10 {
-
-                        let xi: u32;
-                        let yi: u32;
-
-                        if id == 0 {
-                            xi = 0;
-                            yi = 0;
-                        } else if id == 1 {
-                            xi = 1;
-                            yi = 0;
-                        } else if id == 2 {
-                            xi = 0;
-                            yi = 1;
-                        } else {
-                            xi = 1;
-                            yi = 1;
-                        }
-
-                        let grid_pos = [y + yi * 10, x + xi * 10];
-                        if grid_pos != sg[x as usize][y as usize].pos {
-                            println!(" ERRR > {}/{} {}/{} = {}/{}", x, y, sg[x as usize][y as usize].pos[0], sg[x as usize][y as usize].pos[1], grid_pos[0], grid_pos[1]);
-                        }
-                    }
-                }
-            }
-            sim.update_whole(subgrids2, edge_cases2)
+            sim.update_whole((subgrids2, idorder), edge_cases2);
         }
     }
 }
