@@ -1,12 +1,12 @@
+use crossterm::{cursor, terminal, QueueableCommand};
 use piston_window::*;
 use rand::Rng;
-use crossterm::{QueueableCommand, cursor, terminal};
 
 use std::io::stdout;
 
-use crate::{pixel::*};
 use crate::draw::*;
 use crate::elements::*;
+use crate::pixel::*;
 
 pub struct Simulation {
     pub size: [u32; 2],
@@ -23,21 +23,23 @@ pub struct Simulation {
 
 impl Simulation {
     pub fn new() -> Simulation {
-
         let elements = ElementList::new();
 
         const SCALE: u32 = 10;
         const CHUNK_DIV: u32 = 4;
         const SIM_SIZE: u32 = 20;
-        let size: [u32; 2] = [SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32, SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32];
+        let size: [u32; 2] = [
+            SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32,
+            SIM_SIZE * (CHUNK_DIV as f64).sqrt() as u32,
+        ];
 
         let gravity: f64 = 1.0;
-        let friction: f64 = 0.99;        
+        let friction: f64 = 0.99;
         let mouse_pos = [0, 0];
         let edge_mode: bool = false;
-        
+
         let mut grid: Vec<Vec<Pixel>> = vec![];
-        
+
         //SET pos in pixels to index in grid
         for y in 0..size[1] {
             let mut row: Vec<Pixel> = vec![];
@@ -46,13 +48,14 @@ impl Simulation {
             }
             grid.push(row);
         }
-        
+
         //temp check to make sure air is set
 
-        let window: PistonWindow = WindowSettings::new("Pixel Simulation", [size[0] * SCALE, size[1] * SCALE])
-            .exit_on_esc(true)
-            .build()
-            .unwrap();
+        let window: PistonWindow =
+            WindowSettings::new("Pixel Simulation", [size[0] * SCALE, size[1] * SCALE])
+                .exit_on_esc(true)
+                .build()
+                .unwrap();
 
         Simulation {
             size: size,
@@ -68,9 +71,8 @@ impl Simulation {
         }
     }
     //returns the subgrid and the edge cases
-    
-    pub fn update_grids(&mut self, _verbose: bool) -> Vec<Vec<Vec<Pixel>>> {
 
+    pub fn update_grids(&mut self, _verbose: bool) -> Vec<Vec<Vec<Pixel>>> {
         let mut subgrids: Vec<Vec<Vec<Pixel>>> = vec![];
 
         //split grid into subgrids
@@ -79,10 +81,14 @@ impl Simulation {
                 println!("STEP {} {}", x, y);
                 //trim self.grid.clone to self.size / chunk_div + offset
                 let mut subgrid: Vec<Vec<Pixel>> = vec![];
-                for y2 in 0..self.size[1] / (self.chunk_div as f64).sqrt() as u32  {
+                for y2 in 0..self.size[1] / (self.chunk_div as f64).sqrt() as u32 {
                     let mut row: Vec<Pixel> = vec![];
                     for x2 in 0..self.size[0] / (self.chunk_div as f64).sqrt() as u32 {
-                        row.push(self.grid[(y * self.size[1] / self.chunk_div + y2) as usize][(x * self.size[0] / self.chunk_div + x2) as usize].clone());
+                        row.push(
+                            self.grid[(y * self.size[1] / self.chunk_div + y2) as usize]
+                                [(x * self.size[0] / self.chunk_div + x2) as usize]
+                                .clone(),
+                        );
                     }
                     subgrid.push(row);
                 }
@@ -96,8 +102,11 @@ impl Simulation {
         subgrids
     }
 
-    pub fn update_whole(&mut self, mut sgi : (Vec<Vec<Vec<Pixel>>>, Vec<u32>), mut edge_cases: Vec<Vec<Pixel>>) {
-
+    pub fn update_whole(
+        &mut self,
+        mut sgi: (Vec<Vec<Vec<Pixel>>>, Vec<u32>),
+        mut edge_cases: Vec<Vec<Pixel>>,
+    ) {
         //assemble subgrids into grid, each subgrid is a chunk of the grid
         let mut new_grid: Vec<Vec<Pixel>> = self.grid.clone();
 
@@ -109,7 +118,9 @@ impl Simulation {
 
             for y in 0..subgrid.len() {
                 for x in 0..subgrid[0].len() {
-                    new_grid[(coord[1] as usize * subgrid.len() + y) as usize][(coord[0] as usize * subgrid[0].len() + x) as usize] = subgrid[y][x].clone();
+                    new_grid[(coord[1] as usize * subgrid.len() + y) as usize]
+                        [(coord[0] as usize * subgrid[0].len() + x) as usize] =
+                        subgrid[y][x].clone();
                 }
             }
         }
@@ -121,12 +132,19 @@ impl Simulation {
                 pixel_list.push(pixel);
             }
         }
-        
-        pixel_list.sort_by(|a, b| ((a.vel[0] + a.vel[1]) * a.density).partial_cmp(&((b.vel[0] + b.vel[1]) * b.density)).unwrap());
-        
+
+        pixel_list.sort_by(|a, b| {
+            ((a.vel[0] + a.vel[1]) * a.density)
+                .partial_cmp(&((b.vel[0] + b.vel[1]) * b.density))
+                .unwrap()
+        });
+
         //update pixels in order
         for pix in pixel_list {
-            let new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
+            let new_pos = [
+                pix.pos[0] as i32 + pix.vel[0] as i32,
+                pix.pos[1] as i32 + pix.vel[1] as i32,
+            ];
             let pos = wrapped_coord(new_pos, self.edge_mode, self.size);
 
             println!("WHOLE DATA {}/{}", pix.pos[0], pix.pos[1]);
@@ -153,7 +171,11 @@ impl Simulation {
         self.grid = new_grid;
     }
 
-    pub fn check_interacts(&self, pos: [u32; 2], grid: Vec<Vec<Pixel>>) -> (String, String, [u32; 2]) {
+    pub fn check_interacts(
+        &self,
+        pos: [u32; 2],
+        grid: Vec<Vec<Pixel>>,
+    ) -> (String, String, [u32; 2]) {
         //check if pixel has an interaction, if none return "none", else return replacemnt type
         //input, (catalyst, output)
         let elem = grid[pos[1] as usize][pos[0] as usize].ptype;
@@ -169,7 +191,8 @@ impl Simulation {
                         //interaction found, does the catalyst reciprocate?
                         let t1 = self.elements.get_name(interact.1);
 
-                        if self.elements.interactivity.contains_key(&adj_elem) && interact.0 == elem {
+                        if self.elements.interactivity.contains_key(&adj_elem) && interact.0 == elem
+                        {
                             //catalyst reciprocates, return both
                             let t2 = self.elements.get_name(interact.1);
                             return (t1, t2, a);
@@ -196,13 +219,15 @@ impl Simulation {
     }
 
     pub fn grid_pos(&self, id: u32, pos: [u32; 2]) -> [u32; 2] {
-
         let x = pos[0];
         let y = pos[1];
 
         let [xi, yi] = id_coord(id, (self.chunk_div as f64).sqrt() as u32);
 
-        [y + yi * self.size[1] / (self.chunk_div as f64).sqrt() as u32, x + xi * self.size[0] / (self.chunk_div as f64).sqrt() as u32]
+        [
+            y + yi * self.size[1] / (self.chunk_div as f64).sqrt() as u32,
+            x + xi * self.size[0] / (self.chunk_div as f64).sqrt() as u32,
+        ]
     }
 
     pub fn print(&self, _verbose: bool) {
@@ -216,9 +241,11 @@ impl Simulation {
             println!();
         }
         stdout.queue(cursor::RestorePosition).unwrap();
-        stdout.queue(terminal::Clear(terminal::ClearType::CurrentLine)).unwrap();
+        stdout
+            .queue(terminal::Clear(terminal::ClearType::CurrentLine))
+            .unwrap();
     }
-                
+
     //place pixel (sand) at mouse position
     pub fn place_pixel(&mut self, typ: String) {
         let x = self.mouse_pos[0];
@@ -230,8 +257,8 @@ impl Simulation {
     pub fn place_line(&mut self, pos: [u32; 2], typ: String) {
         let rect = rect_pos(self.mouse_pos, pos);
         //println!("{:?}", rect);
-        for x in rect[0]..rect[2] + 1{
-            for y in rect[1]..rect[3] + 1{
+        for x in rect[0]..rect[2] + 1 {
+            for y in rect[1]..rect[3] + 1 {
                 self.grid[y as usize][x as usize] = Pixel::spawn(typ.clone(), [x, y]);
             }
         }
@@ -256,7 +283,7 @@ impl Simulation {
     }
 
     //place pixel (air) at mouse position r=radius
-    pub fn erase(&mut self, r: u32, _typ: String ) {
+    pub fn erase(&mut self, r: u32, _typ: String) {
         let _x = self.mouse_pos[0];
         let _y = self.mouse_pos[1];
         for pixel in self.radius_iter(r) {
@@ -286,17 +313,33 @@ pub fn radius(pos: [u32; 2], r: u32, size: [u32; 2]) -> Vec<[u32; 2]> {
     let mut vec = Vec::new();
     for i in 0..r {
         for j in 0..r {
-            if i*i + j*j <= r*r {
-                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < size[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < size[1] as i32 {
+            if i * i + j * j <= r * r {
+                if 0 <= x as i32 + (i as i32)
+                    && x as i32 + (i as i32) < size[0] as i32
+                    && 0 <= y as i32 + (j as i32)
+                    && y as i32 + (j as i32) < size[1] as i32
+                {
                     vec.push([x + i, y + j]);
-                } 
-                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < size[0] as i32 && 0 <= y as i32 + (j as i32) && y as i32 + (j as i32) < size[1] as i32 {
+                }
+                if 0 <= x as i32 - (i as i32)
+                    && x as i32 - (i as i32) < size[0] as i32
+                    && 0 <= y as i32 + (j as i32)
+                    && y as i32 + (j as i32) < size[1] as i32
+                {
                     vec.push([x - i, y + j]);
                 }
-                if 0 <= x as i32 + (i as i32) && x as i32 + (i as i32) < size[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < size[1] as i32 {
+                if 0 <= x as i32 + (i as i32)
+                    && x as i32 + (i as i32) < size[0] as i32
+                    && 0 <= y as i32 - (j as i32)
+                    && y as i32 - (j as i32) < size[1] as i32
+                {
                     vec.push([x + i, y - j]);
                 }
-                if 0 <= x as i32 - (i as i32) && x as i32 - (i as i32) < size[0] as i32 && 0 <= y as i32 - (j as i32) && y as i32 - (j as i32) < size[1] as i32 {
+                if 0 <= x as i32 - (i as i32)
+                    && x as i32 - (i as i32) < size[0] as i32
+                    && 0 <= y as i32 - (j as i32)
+                    && y as i32 - (j as i32) < size[1] as i32
+                {
                     vec.push([x - i, y - j]);
                 }
             }
@@ -347,12 +390,12 @@ pub fn wrapped_coord(pos: [i32; 2], edge_mode: bool, size: [u32; 2]) -> [u32; 2]
             y = by;
         }
     }
-    [x as u32, y as u32]            
+    [x as u32, y as u32]
 }
 
 pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]> {
     let mut vec = Vec::new();
-    
+
     for i in -1..2 {
         for j in -1..2 {
             if i != 0 || j != 0 {
@@ -368,7 +411,15 @@ pub fn adjacents(pos: [u32; 2], edge_mode: bool, size: [u32; 2]) -> Vec<[u32; 2]
     vec
 }
 
-pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, gravity: f64, friction: f64, edge_mode: bool) -> (Vec<Vec<Pixel>>, Vec<Pixel>, u32) {
+pub fn subdate(
+    sgrid: Vec<Vec<Pixel>>,
+    id: u32,
+    size: [u32; 2],
+    chunk_div: u32,
+    gravity: f64,
+    friction: f64,
+    edge_mode: bool,
+) -> (Vec<Vec<Pixel>>, Vec<Pixel>, u32) {
     //mutates the subgrid and returns the edge cases
     let mut edge_cases: Vec<Pixel> = vec![];
     //get list of pixels ordered by and velocity
@@ -377,7 +428,7 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
     let chunk_id = id_coord(id, (chunk_div as f64).sqrt() as u32);
 
     let mut subgrid = sgrid.clone();
-    
+
     //println!("SUBDATE1 LEN{} LEN{}", subgrid.len(), subgrid.len());
     for y in 0..subgrid.len() {
         for x in 0..subgrid[y].len() {
@@ -394,17 +445,22 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
             }
 
             if move_chance > pix.min_force {
-                pix.vel[0] += rng.gen_range(-gravity * (2.0 - pix.min_force)..gravity * (2.0 - pix.min_force));
-                pix.vel[1] += rng.gen_range(-gravity * (1.4 - pix.min_force)..gravity * (1.0 - pix.min_force));
+                pix.vel[0] += rng
+                    .gen_range(-gravity * (2.0 - pix.min_force)..gravity * (2.0 - pix.min_force));
+                pix.vel[1] += rng
+                    .gen_range(-gravity * (1.4 - pix.min_force)..gravity * (1.0 - pix.min_force));
             }
-              
-            pix.vel = [pix.vel[0] * friction * pix.friction_multiplier, pix.vel[1] * friction * pix.friction_multiplier];
+
+            pix.vel = [
+                pix.vel[0] * friction * pix.friction_multiplier,
+                pix.vel[1] * friction * pix.friction_multiplier,
+            ];
 
             pix.vel[1] += pix.gravity_multiplier * gravity;
-            
+
             if pix.min_force > pix.vel[0].abs() {
                 pix.vel[0] = 0.0;
-            } 
+            }
             if pix.min_force > pix.vel[1].abs() {
                 pix.vel[1] = 0.0;
             }
@@ -414,45 +470,59 @@ pub fn subdate(sgrid: Vec<Vec<Pixel>>, id: u32, size: [u32; 2], chunk_div: u32, 
         }
     }
 
-    pixel_list.sort_by(|a, b| ((a.vel[0] + a.vel[1]) * a.density).partial_cmp(&((b.vel[0] + b.vel[1]) * b.density)).unwrap());
+    pixel_list.sort_by(|a, b| {
+        ((a.vel[0] + a.vel[1]) * a.density)
+            .partial_cmp(&((b.vel[0] + b.vel[1]) * b.density))
+            .unwrap()
+    });
 
     let mut pixel_pairs = Vec::new();
     for pix in &pixel_list {
-
         let pos = [pix.pos[0] as i32, pix.pos[1] as i32];
-        let new_pos = [pix.pos[0] as i32 + pix.vel[0] as i32, pix.pos[1] as i32 + pix.vel[1] as i32];
+        let new_pos = [
+            pix.pos[0] as i32 + pix.vel[0] as i32,
+            pix.pos[1] as i32 + pix.vel[1] as i32,
+        ];
 
         if check_coord(new_pos, size) == false || check_coord(pos, size) {
             edge_cases.push(pix.clone());
             //println!("    S: EDGE CASE: {:?}", pix.pos);
             continue;
-        //else if pix is none || pix doesnt move || dest is same type || dest is greater density
+            //else if pix is none || pix doesnt move || dest is same type || dest is greater density
         }
         let dest = sgrid[pos[0] as usize][pos[1] as usize];
         if pix.ptype == 0 || new_pos == [pos[0] as i32, pos[1] as i32] {
-                //println!("    S: NO MOVE1: {:?}", pix.pos);
-                continue;
+            //println!("    S: NO MOVE1: {:?}", pix.pos);
+            continue;
         } else if dest.ptype == pix.ptype || pix.density < dest.density {
             //println!("    S: NO MOVE2: {:?}", pix.pos);
             continue;
         } else {
-            //rintln!("    S: MOVE: {:?} {:?}", pix.pos, new_pos);           
+            //rintln!("    S: MOVE: {:?} {:?}", pix.pos, new_pos);
             pixel_pairs.push([pos, new_pos]);
         }
     }
-    
+
     //for every move, swap pixels
     for pair in &pixel_pairs {
         //println!("SSG {}/{} {}/{}", pair[0][0], pair[0][1], pair[1][0], pair[1][1]);
-        subgrid = swap_pix([pair[0][0] as u32, pair[0][1] as u32], [pair[1][0] as u32, pair[1][1] as u32], &mut subgrid, &sgrid);
+        subgrid = swap_pix(
+            [pair[0][0] as u32, pair[0][1] as u32],
+            [pair[1][0] as u32, pair[1][1] as u32],
+            &mut subgrid,
+            &sgrid,
+        );
     }
 
     return (subgrid, edge_cases, id);
 }
 
-
-pub fn swap_pix(old_pos: [u32; 2], new_pos: [u32; 2], grid: &mut Vec<Vec<Pixel>>, ogrid: &Vec<Vec<Pixel>>) -> Vec<Vec<Pixel>> {
-
+pub fn swap_pix(
+    old_pos: [u32; 2],
+    new_pos: [u32; 2],
+    grid: &mut Vec<Vec<Pixel>>,
+    ogrid: &Vec<Vec<Pixel>>,
+) -> Vec<Vec<Pixel>> {
     //println!("POS SWAP: {:?} {:?}", old_pos, new_pos);
 
     let mut pix = ogrid[old_pos[1] as usize][old_pos[0] as usize].clone();

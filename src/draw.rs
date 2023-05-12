@@ -1,5 +1,5 @@
-use rand::Rng;
 use piston_window::*;
+use rand::Rng;
 
 use crate::pixel::*;
 
@@ -46,12 +46,11 @@ pub fn screem(pos: [u32; 2], scale: u32) -> [f64; 4] {
 }
 
 pub fn draw_cursor_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) {
-
     let tx = pos[0];
     let ty = pos[1];
     let lx = pos[2];
     let by = pos[3];
-    
+
     let line = [tx, ty, lx, ty];
     let line2 = [tx, ty, tx, by];
     let line3 = [tx, by, lx, by];
@@ -60,7 +59,6 @@ pub fn draw_cursor_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) 
         let lined = line::Line::new([0.0, 0.0, 0.0, 1.0], 1.0);
         lined.draw(*line, &context.draw_state, context.transform, graphics);
     }
-
 }
 
 pub fn get_screen_edge(pos: [u32; 4], scale: u32) -> [f64; 4] {
@@ -73,12 +71,11 @@ pub fn get_screen_edge(pos: [u32; 4], scale: u32) -> [f64; 4] {
 }
 
 pub fn draw_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) {
-
     let tx = pos[0];
     let ty = pos[1];
     let lx = pos[2];
     let by = pos[3];
-    
+
     let line = [tx, ty, lx, ty];
     let line2 = [tx, ty, tx, by];
     let line3 = [tx, by, lx, by];
@@ -87,10 +84,17 @@ pub fn draw_outline(pos: [f64; 4], context: Context, graphics: &mut G2d) {
         let lined = line::Line::new([0.0, 0.0, 0.0, 1.0], 1.0);
         lined.draw(*line, &context.draw_state, context.transform, graphics);
     }
-
 }
 
-pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixel>>, scale: u32, case: u8, pos: [u32; 4], size: [u32; 2]) {
+pub fn new_frame(
+    window: &mut PistonWindow,
+    event: &Event,
+    pixels: &Vec<Vec<Pixel>>,
+    scale: u32,
+    case: u8,
+    pos: [u32; 4],
+    size: [u32; 2],
+) {
     window.draw_2d(event, |context, graphics, _| {
         clear([1.0; 4], graphics);
         //pixel.pixel_draw
@@ -99,7 +103,6 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixe
         if case == 1 {
             //holding left click, draw from last click to mouse pos
             draw_outline(get_screen_edge(pos, scale), context, graphics);
-
         } else if case == 2 {
             //radius
             let radius_vec = radius([pos[0], pos[1]], pos[2], size);
@@ -115,7 +118,7 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixe
                     bb_x[0] = pix[0];
                 } else if pix[0] > bb_x[1] {
                     bb_x[1] = pix[0];
-                } 
+                }
                 if pix[1] < bb_y[0] {
                     bb_y[0] = pix[1];
                 } else if pix[1] > bb_y[1] {
@@ -124,21 +127,29 @@ pub fn new_frame(window: &mut PistonWindow, event: &Event, pixels: &Vec<Vec<Pixe
             }
 
             //just draw the bounding box for now
-            draw_outline(get_screen_edge([bb_x[0], bb_y[0], bb_x[1], bb_y[1]], scale), context, graphics);
-
+            draw_outline(
+                get_screen_edge([bb_x[0], bb_y[0], bb_x[1], bb_y[1]], scale),
+                context,
+                graphics,
+            );
         } else if case == 3 {
             //line from edge to edge at y height
-            draw_outline([0.0, pos[1] as f64 * scale as f64, size[0] as f64 * scale as f64, pos[1] as f64 * scale as f64 + scale as f64], context, graphics);
-            
+            draw_outline(
+                [
+                    0.0,
+                    pos[1] as f64 * scale as f64,
+                    size[0] as f64 * scale as f64,
+                    pos[1] as f64 * scale as f64 + scale as f64,
+                ],
+                context,
+                graphics,
+            );
         } else if case == 4 {
             //draw cursor outline
             draw_cursor_outline(screem([pos[0], pos[1]], scale), context, graphics);
         }
-        
     });
 }
-        
-
 
 pub fn _rand_color_margin(color: [f32; 4], margin: f32) -> [f32; 4] {
     let mut rng = rand::thread_rng();

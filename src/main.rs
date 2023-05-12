@@ -33,27 +33,29 @@ fn main() {
     let mut ctrl = false;
     let mut alt = false;
     let mut _tab = false;
-    
-    while let Some(event) = sim.window.next() {
 
+    while let Some(event) = sim.window.next() {
         //draw on render
         if let Some(_args) = event.render_args() {
-            //prepare cursor arguments, 
+            //prepare cursor arguments,
             //cursor is drawn on top of everything else
             let case: u8;
-            let mut pos = [sim.mouse_pos[0], sim.mouse_pos[1], last_left_click[0], last_left_click[1]];
-                
+            let mut pos = [
+                sim.mouse_pos[0],
+                sim.mouse_pos[1],
+                last_left_click[0],
+                last_left_click[1],
+            ];
+
             if left_click {
                 //from last click to mouse pos
                 case = 1;
-
             } else if right_click {
                 //radius
                 case = 2;
 
                 pos[2] = 5;
                 pos[3] = 5;
-
             } else if space {
                 //line across screen
                 case = 3;
@@ -62,7 +64,15 @@ fn main() {
                 case = 4;
             }
 
-            new_frame(&mut sim.window, &event, &sim.grid, sim.scale, case, pos, sim.size);
+            new_frame(
+                &mut sim.window,
+                &event,
+                &sim.grid,
+                sim.scale,
+                case,
+                pos,
+                sim.size,
+            );
         }
 
         //track mouse position
@@ -167,7 +177,6 @@ fn main() {
             sim.place_pixel("wood".to_string());
         }
 
-
         //update simulation
         if let Some(_args) = event.update_args() {
             let verbose = false;
@@ -175,14 +184,22 @@ fn main() {
                 println!("PRE UPDATE ++++++++++++++++++++++++++++++++++++++++++++++++scale: {}, size: {}x{}", sim.scale, sim.size[0], sim.size[1]);
                 sim.print(verbose);
             }
-                
+
             let subgrids = sim.update_grids(verbose);
             //multithread the subdate fn
             let mut handles = vec![];
             for i in 0..sim.chunk_div {
                 let subgrid = subgrids[i as usize].clone();
                 let handle = thread::spawn(move || {
-                    let (sg, eg, id) = subdate(subgrid, i, sim.size, sim.chunk_div, sim.gravity, sim.friction, sim.edge_mode);
+                    let (sg, eg, id) = subdate(
+                        subgrid,
+                        i,
+                        sim.size,
+                        sim.chunk_div,
+                        sim.gravity,
+                        sim.friction,
+                        sim.edge_mode,
+                    );
                     (sg, eg, id)
                 });
                 handles.push(handle);

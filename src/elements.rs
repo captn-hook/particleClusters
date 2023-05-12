@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::pixel::*;
 use crate::draw::*;
+use crate::pixel::*;
 
 //singletons of each element string and their number u8
 pub struct ElementList {
@@ -9,7 +9,7 @@ pub struct ElementList {
     pub element_codes: Vec<u8>,
     //              input, (catalyst, output)
     pub interactivity: HashMap<u8, Vec<(u8, u8)>>,
-    
+
     _lenght: usize,
 }
 
@@ -22,23 +22,12 @@ impl ElementList {
             "water".to_string(),   //3
             "lava".to_string(),    //4
             "stone".to_string(),   //5
-            "brick".to_string(),   //6 
+            "brick".to_string(),   //6
             "wood".to_string(),    //7
             "smoke".to_string(),   //8
             "glass".to_string(),   //9
         ];
-        let element_codes = vec![
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-        ];
+        let element_codes = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         let _lenght = elements.len();
 
         let interactivity_list: [(u8, u8, u8); 5] = [
@@ -59,7 +48,10 @@ impl ElementList {
         for i in 0..interactivity_list.len() {
             let (input, catalyst, output) = interactivity_list[i];
             if interactivity.contains_key(&input) {
-                interactivity.get_mut(&input).unwrap().push((catalyst, output));
+                interactivity
+                    .get_mut(&input)
+                    .unwrap()
+                    .push((catalyst, output));
             } else {
                 interactivity.insert(input, vec![(catalyst, output)]);
             }
@@ -118,115 +110,51 @@ pub fn glass(pos: [u32; 2]) -> Pixel {
     let g = rand_color(0.5, 0.03);
     let b = rand_color(0.65, 0.1);
 
-    Pixel::new(9,
-        pos,
-        [0.0; 2],
-        [r, g, b, 1.0],
-        0.8,
-        1.1,
-        1.2,
-        0.99,
-    )
+    Pixel::new(9, pos, [0.0; 2], [r, g, b, 1.0], 0.8, 1.1, 1.2, 0.99)
 }
 
 pub fn smoke(pos: [u32; 2]) -> Pixel {
     let cl = rand_color_grey(0.6, 0.1);
 
-    Pixel::new(8,
-        pos,
-        [0.0; 2],
-        cl,
-        0.01,
-        0.45,
-        -1.5,
-        0.95,
-    )
+    Pixel::new(8, pos, [0.0; 2], cl, 0.01, 0.45, -1.5, 0.95)
 }
 
 pub fn wood(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.5, 0.15);
     let g = rand_color(0.3, 0.05);
 
-    Pixel::new(7,
-        pos,
-        [0.0; 2],
-        [r, g, 0.0, 1.0],
-        0.4,
-        0.45,
-        1.2,
-        0.99,
-    )
+    Pixel::new(7, pos, [0.0; 2], [r, g, 0.0, 1.0], 0.4, 0.45, 1.2, 0.99)
 }
 
 pub fn air(pos: [u32; 2]) -> Pixel {
     let cl = rand_color_grey(1.0, 0.05);
 
-    Pixel::new(1,
-        pos,
-        [0.0; 2],
-        cl,
-        0.03,
-        0.0,
-        0.01,
-        0.95,
-    )
+    Pixel::new(1, pos, [0.0; 2], cl, 0.03, 0.0, 0.01, 0.95)
 }
 
 pub fn sand(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.8, 0.15);
     let g = rand_color(0.8, 0.1);
 
-    Pixel::new(2,
-        pos,
-        [0.0; 2],
-        [r, g, 0.0, 1.0],
-        0.8,
-        0.4,
-        1.2,
-        0.99,
-    )
+    Pixel::new(2, pos, [0.0; 2], [r, g, 0.0, 1.0], 0.8, 0.4, 1.2, 0.99)
 }
 
 pub fn water(pos: [u32; 2]) -> Pixel {
     let b = rand_color(0.8, 0.15);
 
-    Pixel::new(3,
-        pos,
-        [0.0; 2],
-        [0.0, 0.0, b, 1.0],
-        0.5,
-        0.0,
-        1.0,
-        0.99,
-    )
+    Pixel::new(3, pos, [0.0; 2], [0.0, 0.0, b, 1.0], 0.5, 0.0, 1.0, 0.99)
 }
 
 pub fn lava(pos: [u32; 2]) -> Pixel {
     let r = rand_color(0.8, 0.15);
 
-    Pixel::new(4,
-        pos,
-        [0.0; 2],
-        [r, 0.0, 0.0, 1.0],
-        0.9,
-        0.2,
-        1.0,
-        0.95,
-    )
+    Pixel::new(4, pos, [0.0; 2], [r, 0.0, 0.0, 1.0], 0.9, 0.2, 1.0, 0.95)
 }
 
 pub fn stone(pos: [u32; 2]) -> Pixel {
     let cl = rand_color_grey(0.1, 0.25);
 
-    Pixel::new(5,
-        pos,
-        [0.0; 2],
-        cl,
-        0.94,
-        0.6,
-        1.0,
-        0.99,
-    )
+    Pixel::new(5, pos, [0.0; 2], cl, 0.94, 0.6, 1.0, 0.99)
 }
 
 pub fn brick(pos: [u32; 2]) -> Pixel {
@@ -234,15 +162,7 @@ pub fn brick(pos: [u32; 2]) -> Pixel {
     let g = rand_color(0.4, 0.1);
     let b = rand_color(0.2, 0.1);
 
-    Pixel::new(6,
-        pos,
-        [0.0; 2],
-        [r, g, b, 1.0],
-        0.98,
-        1.1,
-        1.0,
-        0.99,
-    )
+    Pixel::new(6, pos, [0.0; 2], [r, g, b, 1.0], 0.98, 1.1, 1.0, 0.99)
 }
 
 //fuck ion kno
@@ -256,14 +176,14 @@ pub fn brick(pos: [u32; 2]) -> Pixel {
 
 // impl PType {
 //     pub fn _new(name: String) -> PType {
-        
+
 //         let interacts: Vec<String> = vec![];
 //         PType {
 //             name,
 //             interact: interacts,
 //         }
-//     } 
-    
+//     }
+
 //     pub fn _add_interact(&mut self, interact: String) {
 //         self.interact.push(interact);
 //     }

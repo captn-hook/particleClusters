@@ -17,7 +17,16 @@ pub struct Pixel {
 }
 
 impl Pixel {
-    pub fn new(ptype: u8, pos: [u32; 2], vel: [f64; 2], color: [f32; 4], density: f64, min_force: f64, gravity_multiplier: f64, friction_multiplier: f64) -> Pixel {
+    pub fn new(
+        ptype: u8,
+        pos: [u32; 2],
+        vel: [f64; 2],
+        color: [f32; 4],
+        density: f64,
+        min_force: f64,
+        gravity_multiplier: f64,
+        friction_multiplier: f64,
+    ) -> Pixel {
         Pixel {
             ptype,
             pos,
@@ -26,7 +35,7 @@ impl Pixel {
             density,
             min_force,
             gravity_multiplier,
-            friction_multiplier,    
+            friction_multiplier,
         }
     }
 
@@ -73,12 +82,12 @@ impl Pixel {
     //     let symbols = " ░▒▓█EDCBAX";
     //     //use density to determine symbol, and color from color
     //     let mut printstr = format!("[{}]", symbols.chars().nth(self.density as usize).unwrap());
-        
+
     //     //get max from colored rgb
     //     //red max
     //     if self.color[0] > self.color[1] && self.color[0] > self.color[2] {
     //         printstr = printstr.red().to_string();
-    //     //green max 
+    //     //green max
     //     } else if self.color[1] > self.color[0] && self.color[1] > self.color[2] {
     //         printstr = printstr.green().to_string();
     //     //blue max
@@ -104,7 +113,6 @@ impl Pixel {
     //         printstr = printstr.on_white().to_string();
     //     }
 
-
     //     if direct {
     //         print!("{}", printstr);
     //     }
@@ -112,21 +120,19 @@ impl Pixel {
     // }
 
     pub fn draw(&self, scale: u32) -> ([f64; 4], [f32; 4]) {
-        
         let coords = screem(self.pos, scale);
         let tx = coords[0];
         let ty = coords[1];
 
-        return (coords, self.color)
+        return (coords, self.color);
     }
 }
 
 pub fn pixel_draw(pixels: &Vec<Vec<Pixel>>, context: Context, graphics: &mut G2d, scale: u32) {
     for (_y, row) in pixels.iter().enumerate() {
         for (_x, pixel) in row.iter().enumerate() {
-            
             let mut ruler = false;
-                    
+
             if pixel.density > 0.95 && (pixel.vel[0] == 0.0 && pixel.vel[1] == 0.0) {
                 ruler = true;
             }
